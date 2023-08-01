@@ -1,6 +1,8 @@
 use std::env::var;
+use crate::weather::WeatherInfo;
 
-pub fn fetch_weather(){
+
+pub async fn fetch_weather(){
     // https://api.openweathermap.org/data/2.5/weather?lat=59.41709&lon=17.97785&appid=d35ed37117737ce0e9c56f8bb91a02dd
 
     let api_key = var("OWM_API_KEY").expect("OWM_API_KEY is required to run this hook").to_string();
@@ -29,10 +31,5 @@ pub fn fetch_weather(){
         }
     );
 
-
-    let res = CompanyQuote::get(&symbol, &api_key).await?;
-    println!("{}'s current stock price: {}", symbol, res.c);
-
-    Ok(())
-
+    let _ = WeatherInfo::get(latitude, longitude, &api_key).await;
 }
