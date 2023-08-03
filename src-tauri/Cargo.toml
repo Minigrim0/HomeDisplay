@@ -1,13 +1,16 @@
 [package]
 name = "home-display"
-version = "0.0.0"
-description = "A Tauri App"
-authors = ["you"]
+version = "0.1.0"
+description = "A home display for nearby bus stops, weather information and currency exchange rates"
+authors = ["Minigrim0"]
 license = ""
 repository = ""
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+# This binary is used to fetch data and store it in redis
+[[bin]]
+name = "fetcher"
+path = "src/fetcher.rs"
 
 [build-dependencies]
 tauri-build = { version = "1.2", features = [] }
@@ -18,8 +21,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_derive = "1.0.180"
 reqwest = { version = "0.11.18", features = ["json"] }
+tokio = { version = "1.29.1", features = ["full"] }
 
 [features]
-# this feature is used for production builds or when `devPath` points to the filesystem
-# DO NOT REMOVE!!
-custom-protocol = ["tauri/custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]  # DO NOT REMOVE!!
