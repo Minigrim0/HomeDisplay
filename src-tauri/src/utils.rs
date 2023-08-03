@@ -1,5 +1,5 @@
 use std::env::var;
-use crate::weather::WeatherInfo;
+use crate::api::weather::WeatherInfo;
 
 
 pub async fn fetch_weather() -> Option<WeatherInfo> {

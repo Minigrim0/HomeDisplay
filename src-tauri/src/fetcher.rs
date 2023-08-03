@@ -5,7 +5,8 @@
 
 use utils::fetch_weather;
 
-pub mod weather;
+pub mod models;
+pub mod api;
 pub mod utils;
 
 #[tokio::main(flavor = "multi_thread")]

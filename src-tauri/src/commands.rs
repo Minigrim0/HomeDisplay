@@ -1,4 +1,4 @@
-use crate::weather::WeatherInfo;
+use crate::models::weather::WeatherInfo;
 use crate::utils::fetch_weather;
 
 #[tauri::command]
