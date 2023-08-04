@@ -1,47 +1,33 @@
 use crate::models::weather::WeatherInfo;
-use reqwest::Url;
+use std::env::var;
 
-impl WeatherInfo {
-    pub async fn get(latitude: f32, longitude: f32, api_key: &String) -> Option<WeatherInfo> {
-        let url: Url = match Url::parse(
-            &*format!(
-                "https://api.openweathermap.org/data/2.5/weather?lat={}&lon={}&units=metric&appid={}",
-                latitude, longitude, api_key
-            )
-        ) {
-            Ok(url) => url,
-            Err(err) => {
-                println!("Could not parse URL: {}", err);
-                return None;
-            }
-        };
 
-        let result = match reqwest::get(url).await {
-            Ok(resp) => resp,
-            Err(_) => {
-                println!("Unable to fetch weather information");
-                return None;
-            }
-        };
+pub async fn fetch_weather() -> Option<WeatherInfo> {
+    let api_key = var("OWM_API_KEY").expect("OWM_API_KEY is required to run this hook").to_string();
 
-        match result.status() {
-            reqwest::StatusCode::OK => {
-                match result.json::<WeatherInfo>().await {
-                    Ok(data) => Some(data),
-                    Err(err) => {
-                        println!("Error while parsing the weather data: {}", err.to_string());
-                        None
-                    }
-                }
-            },
-            reqwest::StatusCode::UNAUTHORIZED => {
-                println!("Need to grab a new token");
-                None
-            },
-            _ => {
-                println!("Uh oh! Something unexpected happened.");
-                None
-            },
+    let latitude: f32 = var("OWM_LAT").unwrap_or(
+        {
+            println!("Using default latitude value (Err: Missing OWM_LAT)");
+            "59.0".to_string()
         }
-    }
+    ).parse::<f32>().unwrap_or(
+        {
+            println!("Could not convert the given latitude value to f32, using default");
+            59.0
+        }
+    );
+
+    let longitude: f32 = var("OWM_LON").unwrap_or(
+        {
+            println!("Using default latitude value (Err: Missing OWM_LON)");
+            "17.0".to_string()
+        }
+    ).parse::<f32>().unwrap_or(
+        {
+            println!("Could not convert the given longitude value to f32, using default");
+            17.0
+        }
+    );
+
+    WeatherInfo::get(latitude, longitude, &api_key).await
 }

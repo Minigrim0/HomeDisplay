@@ -2,8 +2,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 pub mod models;
+pub mod api;
 pub mod commands;
-pub mod utils;
 
 fn main() {
     tauri::Builder::default()
