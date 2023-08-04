@@ -60,8 +60,6 @@ impl Conversion {
             }
         };
 
-        println!("OER URL is {}", url);
-
         let result = match reqwest::get(url).await {
             Ok(resp) => resp,
             Err(error) => {
