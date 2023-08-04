@@ -47,3 +47,9 @@ Since TypeScript cannot handle type information for `.vue` imports, they are shi
 2. Reload the VS Code window by running `Developer: Reload Window` from the command palette.
 
 You can learn more about Take Over mode [here](https://github.com/johnsoncodehk/volar/discussions/471).
+
+
+# APIs
+* [openweathermap](https://home.openweathermap.org/) For weather information
+* [openexchangerate](https://openexchangerates.org/) For currency conversion
+* [sl.se](https://sl.se/) (through [trafiklab.se](https://www.trafiklab.se/)) For real-time transports information in Stockholm
