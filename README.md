@@ -16,6 +16,11 @@ In order to be able to use the APIs directly, some variables need to be set.
 ```bash
 export OWM_API_KEY=<Your api key for openweathermap>
 export OER_API_KEY=<Your api key for openexchangerate>
+export SL_PLACE_API_KEY=<Your api key for SL Platsuppslag>
+export SL_PLACE_ROOT_URL=<The base url for the places API>
+export SL_PLACE_BUS_STOPS=<The stops to monitor, separated by a comma>
+export SL_REALTIME_API_KEY=<Your api key for SL Realtidsinformation 4>
+export SL_REALTIME_ROOT_URL=<The base url for the realtid API>
 ```
 
 To set the latitude and longitude of the location to get the weather information for, you will need to export the following variables:
@@ -28,6 +33,11 @@ To change the currency conversions
 ```bash
 export OER_FROM=<Base currency code>  # e.g. EUR
 export OER_TO=<Currency to convert to>  # e.g. SEK
+```
+
+To set the stop(s) to watch time for
+```bash
+export SL_STOPS=<stop_name>,...
 ```
 
 # Fetcher 🎯
