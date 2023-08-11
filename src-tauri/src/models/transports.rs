@@ -20,6 +20,23 @@ pub struct PlatsUppSlagAPI {
 }
 
 
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "PascalCase")]
+pub struct Departure {
+    pub stop_name: String,
+    pub direction: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "PascalCase")]
+pub struct RealTidAPI {
+    pub status_code: i32,
+    pub message: Option<String>,
+    pub execution_time: i32,
+    pub response_data: Vec<Departure>,
+}
+
+
 impl BusStop {
     pub async fn get(api_key: String, base_url: String, bus_stop: String) -> Option<BusStop> {
         let url: Url = match Url::parse(
