@@ -1,5 +1,42 @@
+extern crate redis;
 use crate::models::transports::BusStop;
 use std::env::var;
+use redis::Commands;
+
+
+pub fn check_bus_stop(stop_name: String) -> Option<BusStop> {
+    let client = match redis::Client::open(
+        format!("redis://{}:{}/",
+            std::env::var("REDIS_HOST")
+                .expect("This application needs the REDIS_HOST variable to be set"),
+            std::env::var("REDIS_PORT")
+                .expect("This application needs the REDIS_PORT variable to be set"),
+        ))
+    {
+            Ok(client) => client,
+            Err(_) => {
+                return None
+            }
+    };
+
+    let mut con = match client.get_connection() {
+        Ok(connection) => connection,
+        Err(_) => {
+            return None
+        }
+    };
+
+    match con.get::<String, String>(format!("homedisplay:{}", stop_name)) {
+        Ok(place_id) => Some(match serde_json::from_str(&place_id) {
+            Ok(value) => value,
+            Err(error) => {
+                println!("Could not deserialize busstop from redis {}", error);
+                return None
+            }
+        }),
+        Err(_) => None
+    }
+}
 
 
 // TODO: Add a check to see if bus stop is already in redis
@@ -35,9 +72,14 @@ pub async fn get_bus_stops() -> Option<Vec<BusStop>> {
     let mut bus_stops_array: Vec<BusStop> = vec![];
     let stops = &mut bus_stops_array;
     for stop in bus_stops.iter() {
-        match BusStop::get(api_key.clone(), root_url.clone(), (*stop).to_string()).await {
-            Some(bus_stop) => stops.push(bus_stop),
-            None => println!()
+        match check_bus_stop(stop.to_string()) {
+            Some(place_id) => stops.push(place_id),  // The bus stop is cached in redis
+            None => {  // The bus stop is not in redis, fetch it from the API
+                match BusStop::get(api_key.clone(), root_url.clone(), (*stop).to_string()).await {
+                    Some(bus_stop) => stops.push(bus_stop),
+                    None => println!()
+                }
+            }
         }
     };
 
