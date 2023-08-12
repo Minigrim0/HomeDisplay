@@ -19,7 +19,7 @@ async fn main(){
     };
     let conversion: Option<models::currency::Conversion> = currency::fetch_conversion().await;
     match database::store_conversion(conversion.clone()) {
-        Ok(_) => println!("{}", "Converion information where successfully stored in the database".green()),
+        Ok(_) => println!("{}", "Conversion information where successfully stored in the database".green()),
         Err(error) => println!("{}", format!("An error occured while save the currency information in the database: {}", error).red())
     };
     let bus_stops: Option<Vec<models::transports::BusStop>> = transports::get_bus_stops().await;
