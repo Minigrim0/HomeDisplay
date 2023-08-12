@@ -1,13 +1,13 @@
 use serde_derive::{Deserialize, Serialize};
 use reqwest::Url;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Coord {
     pub lon: f32,
     pub lat: f32,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Weather {
     pub id: i32,
     pub main: String,
@@ -15,7 +15,7 @@ pub struct Weather {
     pub icon: String
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MainWeatherInfo {
     pub temp: f32,  // Celsius
     pub feels_like: f32,
@@ -27,20 +27,20 @@ pub struct MainWeatherInfo {
     pub grnd_level: i32
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct WindInfo {
     pub speed: f32,  // m/s
     pub deg: f32,
     pub gust: f32,  // m/s
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SunInformation {
     pub sunrise: i64,
     pub sunset: i64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct WeatherInfo {
     pub coord: Coord,
     pub weather: Vec<Weather>,
