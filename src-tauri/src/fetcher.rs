@@ -13,17 +13,17 @@ pub mod database;
 #[tokio::main(flavor = "multi_thread")]
 async fn main(){
     let weather: Option<models::weather::WeatherInfo> = weather::fetch_weather().await;
-    match database::store_weather(weather.clone()) {
+    match database::weather::store_weather(weather.clone()) {
         Ok(_) => println!("{}", "Weather was successfully stored in the database".green()),
         Err(error) => println!("{}", format!("An error occured while saving the weather informations: {}", error).red())
     };
     let conversion: Option<models::currency::Conversion> = currency::fetch_conversion().await;
-    match database::store_conversion(conversion.clone()) {
+    match database::currency::store_conversion(conversion.clone()) {
         Ok(_) => println!("{}", "Conversion information where successfully stored in the database".green()),
         Err(error) => println!("{}", format!("An error occured while save the currency information in the database: {}", error).red())
     };
     let bus_stops: Option<Vec<models::transports::BusStop>> = transports::get_bus_stops().await;
-    match database::store_bus_stops(bus_stops.clone()) {
+    match database::transports::store_bus_stops(bus_stops.clone()) {
         Ok(stops) => println!("{}", format!("Successfully saved {} new stop(s) in the database", stops.len()).green()),
         Err(error) => println!("{}", format!("An error occured while saving stops information in the database: {}", error).red())
     };
