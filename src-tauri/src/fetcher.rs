@@ -27,7 +27,4 @@ async fn main(){
         Ok(stops) => println!("{}", format!("Successfully saved {} new stop(s) in the database", stops.len()).green()),
         Err(error) => println!("{}", format!("An error occured while saving stops information in the database: {}", error).red())
     };
-    println!("Weather is {:?}", weather);
-    println!("Conversion is {:?}", conversion);
-    println!("Bus stops are {:?}", bus_stops);
 }
