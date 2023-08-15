@@ -1,10 +1,16 @@
 <template>
-    <p v-if="error === null">
-        {{ base_amount }} {{ base_currency }} => {{ target_amount }} {{ target_currency }}
-    </p>
-    <p v-else style="color: red">
-        {{ error }}
-    </p>
+    <div v-if="error === null && currency !== {}">
+        <p>
+            {{ currency.from_currency_amount }} {{ currency.from_currency }} => {{ currency.to_currency_amount }} {{ currency.to_currency }}
+        </p>
+        <small>
+            {{ currency.timestamp }}
+        </small>
+    </div>
+    <div v-else>
+        <p style="color: red">{{ error }}</p>
+    </div>
+    <button @click="load_currency_data">refresh</button>
 </template>
 
 <script>
@@ -14,18 +20,16 @@ export default {
     name: "CurrencyPanel",
     data(){
         return {
-            base_currency: "EUR",
-            base_amount: 1,
-            target_currency: "SEK",
-            target_amount: 0.09,
+            currency: {},
             loading: true,
             error: null
         }
     },
     methods: {
-        async load_currency_data(){
+        load_currency_data(){
+            console.log("Fecthing currency data");
             invoke("get_currency")
-                .then(response => console.log(response))
+                .then(response => this.currency = response)
                 .catch(error => this.error = error)
                 .finally(() => this.loading = false);
         }
