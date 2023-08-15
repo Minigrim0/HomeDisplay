@@ -1,5 +1,6 @@
 extern crate redis;
 use colored::Colorize;
+use redis::Commands;
 
 
 pub fn get_redis_connection() -> Option<redis::Connection> {
@@ -23,6 +24,27 @@ pub fn get_redis_connection() -> Option<redis::Connection> {
         Err(error) => {
             println!("{}", format!("Could not connect to redis: {}", error).red());
             return None
+        }
+    }
+}
+
+pub async fn get_redis_key(key: String) -> Option<String> {
+    let mut connection = match get_redis_connection() {
+        Some(connection) => connection,
+        None => return None
+    };
+
+    match connection.get::<String, Option<String>>(key) {
+        Err(error) => {
+            println!("An error occured while fetching the conversion from redis: {}", error.to_string());
+            None
+        },
+        Ok(None) => {
+            println!("No conversion stored in the database");
+            None
+        },
+        Ok(Some(serialized)) => {
+            Some(serialized)
         }
     }
 }

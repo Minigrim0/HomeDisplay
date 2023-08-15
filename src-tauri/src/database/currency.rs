@@ -1,6 +1,6 @@
 extern crate redis;
 use redis::Commands;
-use crate::database::connection::get_redis_connection;
+use crate::database::connection;
 use crate::models::currency::Conversion;
 
 
@@ -8,7 +8,7 @@ pub fn store_conversion(conversion: Option<Conversion>) -> Result<Conversion, St
     match conversion {
         Some(conversion) => {
             // Save the conversion in redis
-            let mut con: redis::Connection = match get_redis_connection() {
+            let mut con: redis::Connection = match connection::get_redis_connection() {
                 Some(connection) => connection,
                 None => return Err("Connection to redis could not be made".to_string())
             };
@@ -28,5 +28,16 @@ pub fn store_conversion(conversion: Option<Conversion>) -> Result<Conversion, St
 }
 
 pub async fn fetch_current_conversion() -> Option<Conversion> {
-    None
+    match connection::get_redis_key("homedisplay:conversion".to_string()).await {
+        Some(serialized) => {
+            match serde_json::from_str(serialized.as_str()) {
+                Ok(conversion) => Some(conversion),
+                Err(error) => {
+                    println!("An error occured while deserializing the conversion: {}", error.to_string());
+                    None
+                }
+            }
+        },
+        None => None
+    }
 }
