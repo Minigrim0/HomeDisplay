@@ -1,10 +1,17 @@
 <template>
     <div class="panel-div">
-        <h3 class="panel-title">Currency</h3>
-        <div v-if="loading">loading...</div>
+        <h3 class="panel-title">
+            Currency
+            <button class="link-button" @click="load_currency_data">🔁</button>
+        </h3>
+        <div v-if="loading" class="ring">
+            <div class="ball-holder">
+                <div class="ball"></div>
+            </div>
+        </div>
         <div v-else-if="error === null && currency !== {}">
             <div>
-                <p>
+                <p style="text-align: center;">
                     <span style="border: 2px solid whitesmoke;padding: 0.2em;border-radius: 5px;">
                         {{ currency.from_currency_amount.toFixed(2) }} {{ currency.from_currency }}
                     </span>
@@ -13,12 +20,9 @@
                         {{ currency.to_currency_amount.toFixed(2) }} {{ currency.to_currency }}
                     </span>
                 </p>
-                <small>
-                    {{ refresh_date }}
+                <small style="font-size: 0.7em;">
+                    last update {{ refresh_date }}
                 </small>
-            </div>
-            <div>
-                <button @click="load_currency_data">🔁</button>
             </div>
         </div>
         <div v-else>
@@ -52,7 +56,7 @@ export default {
             return String(num).padStart(places, '0')
         },
         load_currency_data(){
-            console.log("Fecthing currency data");
+            this.loading = true;
             invoke("get_currency")
                 .then(response => this.currency = response)
                 .catch(error => this.error = error)

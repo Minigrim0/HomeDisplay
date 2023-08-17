@@ -1,7 +1,14 @@
 <template>
     <div class="panel-div">
-        <h3 class="panel-title">☀️ Weather ☀️</h3>
-        <div v-if="loading">loading...</div>
+        <h3 class="panel-title">
+            ☀️ Weather ☀️
+            <button class="link-button" @click="load_weather_data">🔁</button>
+        </h3>
+        <div v-if="loading" class="ring">
+            <div class="ball-holder">
+                <div class="ball"></div>
+            </div>
+        </div>
         <div v-else-if="error === null && weather !== {}">
             <div>
                 <p>🌡️ {{ weather.main.temp.toFixed(2) }} C</p>
@@ -20,7 +27,6 @@
         <div v-else>
             <p style="color: red">{{ error }}</p>
         </div>
-        <button @click="load_weather_data">refresh</button>
     </div>
 </template>
 
@@ -48,6 +54,7 @@ export default {
     },
     methods: {
         load_weather_data(){
+            this.loading = true;
             console.log("Fecthing weather data");
             invoke("get_weather")
                 .then(response => this.weather = response)
