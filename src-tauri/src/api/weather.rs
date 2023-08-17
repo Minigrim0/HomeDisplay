@@ -3,32 +3,39 @@ use std::env::var;
 
 
 pub async fn fetch_weather() -> Option<WeatherInfo> {
+    let default_lat = 59.0;
+    let default_lon = 17.0;
+
     let api_key = var("OWM_API_KEY")
         .expect("OWM_API_KEY is required to run this hook");
 
-    let latitude: f32 = var("OWM_LAT").unwrap_or(
-        {
+    let latitude: f64 = match var("OWM_LAT") {
+        Ok(str_lat) => match str_lat.parse::<f64>() {
+            Ok(latitude) => latitude,
+            Err(error) => {
+                println!("Could not convert latitude value to f64, using default (Err: {})", error.to_string());
+                default_lat
+            }
+        },
+        Err(_) => {
             println!("Using default latitude value 59.0 (Err: Missing OWM_LAT)");
-            "59.0".to_string()
+            default_lat
         }
-    ).parse::<f32>().unwrap_or(
-        {
-            println!("Could not convert latitude value to f32, using default");
-            59.0
-        }
-    );
+    };
 
-    let longitude: f32 = var("OWM_LON").unwrap_or(
-        {
+    let longitude: f64 = match var("OWM_LON") {
+        Ok(str_lon) => match str_lon.parse::<f64>() {
+            Ok(longitude) => longitude,
+            Err(error) => {
+                println!("Could not convert longitude value to f64, using default (Err: {})", error.to_string());
+                default_lon
+            }
+        },
+        Err(_) => {
             println!("Using default latitude value 17.0 (Err: Missing OWM_LON)");
-            "17.0".to_string()
+                default_lon
         }
-    ).parse::<f32>().unwrap_or(
-        {
-            println!("Could not convert longitude value to f32, using default");
-            17.0
-        }
-    );
+    };
 
     WeatherInfo::get(latitude, longitude, &api_key).await
 }

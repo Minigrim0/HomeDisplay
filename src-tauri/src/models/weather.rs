@@ -3,8 +3,8 @@ use reqwest::Url;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Coord {
-    pub lon: f32,
-    pub lat: f32,
+    pub lon: f64,
+    pub lat: f64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -17,21 +17,21 @@ pub struct Weather {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MainWeatherInfo {
-    pub temp: f32,  // Celsius
-    pub feels_like: f32,
-    pub temp_min: f32,
-    pub temp_max: f32,
+    pub temp: f64,  // Celsius
+    pub feels_like: f64,
+    pub temp_min: f64,
+    pub temp_max: f64,
     pub pressure: i32,  // hPa
     pub humidity: i32,  // percent
-    pub sea_level: i32,
-    pub grnd_level: i32
+    pub sea_level: Option<i32>,
+    pub grnd_level: Option<i32>
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct WindInfo {
-    pub speed: f32,  // m/s
-    pub deg: f32,
-    pub gust: f32,  // m/s
+    pub speed: f64,  // m/s
+    pub deg: f64,
+    pub gust: Option<f64>,  // m/s
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -50,7 +50,7 @@ pub struct WeatherInfo {
 }
 
 impl WeatherInfo {
-    pub async fn get(latitude: f32, longitude: f32, api_key: &String) -> Option<WeatherInfo> {
+    pub async fn get(latitude: f64, longitude: f64, api_key: &String) -> Option<WeatherInfo> {
         let url: Url = match Url::parse(
             &*format!(
                 "https://api.openweathermap.org/data/2.5/weather?lat={}&lon={}&units=metric&appid={}",
