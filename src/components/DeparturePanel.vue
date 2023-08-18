@@ -2,7 +2,7 @@
     <div class="panel-div">
         <h3 class="panel-title">
             🚂 Departures 🚂
-            <button class="link-button">🔁</button>
+            <button class="link-button" @click="refresh">🔁</button>
         </h3>
         <div v-if="loading" class="ring">
             <div class="ball-holder">
@@ -22,6 +22,7 @@
                 </div>
             </div>
         </div>
+        <small>{{ time_since_last_update }} seconds ago. <span v-if="refreshing">refreshing...</span></small>
     </div>
 </template>
 
@@ -38,7 +39,10 @@ export default {
     data() {
         return {
             departures: {},
+            last_update: new Date(),
+            time_since_last_update: 0,
             loading: true,
+            refreshing: false,
             error: null
         };
     },
@@ -47,13 +51,20 @@ export default {
             invoke("get_departures")
                 .then(response => {
                     this.departures = response;
-                    console.log(this.departures);
+                    this.last_update = new Date();
                 })
                 .catch(error => {
                     this.error = error;
                     console.log("Error !", error)
                 })
-                .finally(() => this.loading = false);
+                .finally(() => {
+                    this.loading = false
+                    this.refreshing = false;
+                });
+        },
+        refresh() {
+            this.refreshing = true;
+            this.fetch_departures();
         },
         no_timings(departure_info) {
             return (
@@ -67,10 +78,18 @@ export default {
               ) && (
                 departure_info.departures.Ships.length === 0
               );
-        }
+        },
+        dateDiffInDays(a, b) {
+            return b - a;
+        },
+        upd_timer(diff){
+            this.time_since_last_update = Math.floor(diff / 1000 % 60);
+            setTimeout(() => this.upd_timer(this.dateDiffInDays(this.last_update, new Date())), 1000);
+        },
     },
     mounted() {
         this.fetch_departures();
+        this.upd_timer(this.dateDiffInDays(this.last_update, new Date()));
     }
 }
 </script>
