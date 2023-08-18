@@ -1,15 +1,16 @@
 extern crate redis;
 use redis::Commands;
 use colored::Colorize;
-use crate::database::connection::get_redis_connection;
-use crate::models::transports::BusStop;
 
+use crate::database::connection;
+use crate::models::transports::{BusStop, StopDepartures};
+use crate::api::transports;
 
 pub fn store_bus_stops(bus_stops: Option<Vec<BusStop>>) -> Result<Vec<BusStop>, String> {
     match bus_stops {
         Some(bus_stops) => {
             // Save the weather in redis
-            let mut con: redis::Connection = match get_redis_connection() {
+            let mut con: redis::Connection = match connection::get_redis_connection() {
                 Some(connection) => connection,
                 None => return Err("Connection to redis could not be made".to_string())
             };
@@ -38,4 +39,11 @@ pub fn store_bus_stops(bus_stops: Option<Vec<BusStop>>) -> Result<Vec<BusStop>, 
         },
         None => Err("Bus stops information could not be saved, bus stops are null.".to_string())
     }
+}
+
+/**
+ * This endpoint fetches Departures directly from the API as realtime is "needed"
+ */
+pub async fn fetch_current_departures() -> Option<Vec<StopDepartures>> {
+    transports::get_all_departures().await
 }

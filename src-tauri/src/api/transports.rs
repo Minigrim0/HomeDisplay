@@ -1,7 +1,9 @@
 extern crate redis;
-use crate::models::transports::BusStop;
 use std::env::var;
 use redis::Commands;
+
+use crate::models::transports::{BusStop, RealTidAPI, StopDepartures};
+use crate::database::connection;
 
 
 pub fn check_bus_stop(stop_name: String) -> Option<BusStop> {
@@ -85,28 +87,61 @@ pub async fn get_bus_stops() -> Option<Vec<BusStop>> {
     Some(bus_stops_array)
 }
 
-// async fn getDepartures(siteId) {
-//     fetch(`/departures?key=${process.env.REACT_APP_SL_REALTIME_API_KEY}&siteid=${siteId}&timewindow=${process.env.REACT_APP_SL_REALTIME_TIME_WINDOW_MINS}`)
-//         .then(response => response.json())
-//         .then(data => {
-//             if (data.ResponseData != null)
-//             {
-//                 let buses = [];
-//                 for (let bus of data.ResponseData.Buses) {
-//                     buses.push({mode: "bus", line: bus.LineNumber, endStation: bus.Destination, departure: bus.DisplayTime})
-//                 }
-//                 if (buses.length !== 0)
-//                 {
-//                     this.setState({
-//                         nextDeparture: {
-//                             mode: "bus",
-//                             timeToDeparture: buses[0].departure,
-//                             departureInfo: buses[0].line + " mot " + buses[0].endStation
-//                         },
-//                         comingDepartures: buses.splice(1, process.env.REACT_APP_SL_REALTIME_SHOW_AMOUNT),
-//                         deviations: this.state.deviations
-//                     });
-//                 }
-//             }
-//         });
-// }
+
+pub async fn get_all_departures() -> Option<Vec<StopDepartures>> {
+    let api_key: String = match var("SL_REALTIME_API_KEY") {
+        Ok(key) => key,
+        Err(_) => {
+            println!("Missing API key for SL realtid API. Can't fetch departures");
+            return None;
+        }
+    };
+
+    let base_url = match var("SL_REALTIME_ROOT_URL") {
+        Ok(url) => url,
+        Err(_) => {
+            println!("Missing Root URL for SL's realtid, can't fetch site ids (export SL_REALTIME_ROOT_URL)");
+            return None;
+        }
+    };
+
+    let mut departures_array: Vec<StopDepartures> = vec![];
+    let departures = &mut departures_array;
+
+    match connection::scan_iter("homedisplay:stops:*".to_string()).await {
+        Some(stops) => {
+            for stop_key in stops.iter() {
+                // Fetch the serialized BusStop
+                let ser_stop: String = match connection::get_redis_key(stop_key.to_string()).await {
+                    Some(ser_stop) => ser_stop,
+                    None => continue
+                };
+                // Deserialize it
+                let stop: BusStop = match serde_json::from_str(ser_stop.as_str()) {
+                    Ok(stops) => stops,
+                    Err(error) => {
+                        println!("Unable to deserialize bus stops, {}", error);
+                        return None
+                    }
+                };
+
+                // Fetch departures for this stop
+                let res: RealTidAPI = match RealTidAPI::get(api_key.clone(), base_url.clone(), stop.clone()).await {
+                    None => {
+                        println!("Got no departure information for stop: {}", stop.name);
+                        continue;
+                    },
+                    Some(information) => information
+                };
+
+                departures.push(StopDepartures { stop: stop, departures: res.response_data });
+            }
+        },
+        None => {
+            println!("Unable to fetch bus stops from redis: key is none");
+            return None
+        }
+    };
+
+    Some(departures_array)
+}

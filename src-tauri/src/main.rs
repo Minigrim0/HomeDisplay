@@ -8,7 +8,11 @@ pub mod commands;
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![crate::commands::get_weather, crate::commands::get_currency])
+        .invoke_handler(tauri::generate_handler![
+            crate::commands::get_weather,
+            crate::commands::get_currency,
+            crate::commands::get_departures,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
