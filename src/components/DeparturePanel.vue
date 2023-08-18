@@ -90,6 +90,7 @@ export default {
     mounted() {
         this.fetch_departures();
         this.upd_timer(this.dateDiffInDays(this.last_update, new Date()));
+        setInterval(this.refresh, 60000);  // Refresh the data every minute
     }
 }
 </script>
