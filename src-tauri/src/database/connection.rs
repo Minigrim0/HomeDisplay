@@ -48,3 +48,22 @@ pub async fn get_redis_key(key: String) -> Option<String> {
         }
     }
 }
+
+pub async fn scan_iter(pattern: String) -> Option<Vec<String>> {
+    let mut connection = match get_redis_connection() {
+        Some(connection) => connection,
+        None => return None
+    };
+
+    let values: Vec<String>;
+    match connection.scan_match(pattern) {
+        Ok(iterator) => {
+            values = iterator.collect();
+            Some(values)
+        },
+        Err(error) => {
+            println!("Unable to get key iterator: {}", error);
+            None
+        }
+    }
+}
