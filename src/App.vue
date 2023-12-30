@@ -1,11 +1,10 @@
 <template>
-  <div class="container">
-    <h1>Home Display</h1>
-
-    <CurrencyPanel />
-    <WeatherPanel />
-    <DeparturePanel />
-  </div>
+    <h1 style="width: 100%;text-align: center;max-height: 5vh">HomeDisplay</h1>
+    <div class="row">
+        <CurrencyPanel />
+        <WeatherPanel />
+        <DeparturePanel />
+    </div>
 </template>
 
 <script>

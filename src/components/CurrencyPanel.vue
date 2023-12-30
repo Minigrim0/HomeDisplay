@@ -1,7 +1,7 @@
 <template>
     <div class="panel-div">
         <h3 class="panel-title">
-            Currency
+            💲 Currency 💲
             <button class="link-button" @click="load_currency_data">🔁</button>
         </h3>
         <div v-if="loading" class="ring">
