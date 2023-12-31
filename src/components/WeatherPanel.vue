@@ -10,19 +10,25 @@
             </div>
         </div>
         <div v-else-if="error === null && weather !== {}">
+            <h3 style="width: 100%;text-align: center;border-top: 1px solid white;padding-top: 5px">🌡️ Temperature 🌡️</h3>
             <div>
-                <p>🌡️ {{ weather.main.temp.toFixed(2) }} C</p>
-                <p>👉👈 {{ weather.main.feels_like.toFixed(2) }} C</p>
-                <p>🥶 {{ weather.main.temp_min.toFixed(2) }} C</p>
-                <p>🥵 {{ weather.main.temp_max.toFixed(2) }} C</p>
+                <p style="margin-top: 5px;margin-bottom: 5px;font-size: 3em;text-align: center">{{ weather.main.temp.toFixed(0) }}°C</p>
+                <div style="font-size: 0.8em;text-align: center" class="row">
+                    <p style="max-width: 33%;min-width: 30%;border-right: 1px solid white;">Feel {{ weather.main.feels_like.toFixed(0) }}°C</p>
+                    <p style="max-width: 33%;min-width: 30%;border-right: 1px solid white;">⬇️ {{ weather.main.temp_min.toFixed(0) }}°C </p>
+                    <p style="max-width: 33%;min-width: 30%;"> ⬆️ {{ weather.main.temp_max.toFixed(0) }}°C</p>
+                </div>
             </div>
-            <div>
-                weather: {{ weather.weather[0].description }}
-                <img :src="`src/assets/img/owm/icons/${this.weather.weather[0].icon}@2x.png`" alt="weather icon"/>
+            <h3 style="width: 100%;text-align: center;border-top: 1px solid white;padding-top: 5px">☀️ Weather ☀️</h3>
+            <div style="text-align: center;width: 100%;">
+                <img style="margin-top: 5px;margin-bottom: 5px;" :src="`src/assets/img/owm/icons/${this.weather.weather[0].icon}@2x.png`" alt="weather icon"/>
+                <p>{{ weather.weather[0].description }}</p>
             </div>
-            <small>
-                {{ sunrise }} => {{ sunset }}
-            </small>
+            <h3 style="width: 100%;text-align: center;border-top: 1px solid white;padding-top: 5px">🌕 Day time ☀️</h3>
+            <div style="text-align: center;width: 100%;">
+                <p>Rise {{ sunrise }}</p>
+                <p>Set {{ sunset }}</p>
+            </div>
         </div>
         <div v-else>
             <p style="color: red">{{ error }}</p>
