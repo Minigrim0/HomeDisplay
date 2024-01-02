@@ -3,10 +3,6 @@
 This project aims to provide timings for nearby bus stop, meteo information and currency information. It is intended to run on a controlled environment on a raspberry-pi.
 
 # Organisation 🛠️
-There are two main components to this project.
-
-The fetcher binary is launched several times a day to fetch data from the APIs and cache the results in a redis database.
-
 The Tauri app is used to display & interact with the results from the APIs (cached in redis). It serves as a desktop application that displays (~in real time)
 the data of the different APIs.
 
@@ -39,12 +35,6 @@ To set the stop(s) to watch time for
 ```bash
 export SL_STOPS=<stop_name>,...
 ```
-
-# Fetcher 🎯
-The fetcher is a simple executable that performs the calls to the different APIs and stores the results in the redis database. It calls every API except for the `SL_REALTID` as this data needs to be refreshed more often that the other. This API is called directly by the backend of the tauri application, on request from the frontend.
-
-It can be run by calling `cargo run --bin fetcher` from the `src-tauri` folder.
-
 
 ## Recommended IDE Setup
 

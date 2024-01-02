@@ -12,6 +12,7 @@ fn main() {
             crate::commands::get_weather,
             crate::commands::get_currency,
             crate::commands::get_departures,
+            crate::commands::fetch_apis
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

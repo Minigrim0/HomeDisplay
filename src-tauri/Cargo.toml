@@ -7,11 +7,6 @@ license = ""
 repository = ""
 edition = "2021"
 
-# This binary is used to fetch data and store it in redis
-[[bin]]
-name = "fetcher"
-path = "src/fetcher.rs"
-
 [build-dependencies]
 tauri-build = { version = "1.4", features = [] }
 
