@@ -1,8 +1,7 @@
 <template>
-    <h1 style="width: 100%;text-align: center;max-height: 5vh">HomeDisplay</h1>
-    <div class="row">
-        <CurrencyPanel />
+    <div class="container">
         <WeatherPanel />
+        <CurrencyPanel />
         <DeparturePanel />
     </div>
 </template>

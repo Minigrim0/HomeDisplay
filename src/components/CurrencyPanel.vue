@@ -1,32 +1,35 @@
 <template>
-    <div class="panel-div">
-        <h3 class="panel-title">
-            💲 Currency 💲
-            <button class="link-button" @click="load_currency_data">🔁</button>
-        </h3>
-        <div v-if="loading" class="ring">
-            <div class="ball-holder">
-                <div class="ball"></div>
+    <div class="panel">
+        <h1 style="width: 100%;text-align: center;max-height: 5vh">HomeDisplay</h1>
+        <div class="panel-div">
+            <h3 class="panel-title">
+                💲 Currency 💲
+                <button class="link-button" @click="load_currency_data">🔁</button>
+            </h3>
+            <div v-if="loading" class="ring">
+                <div class="ball-holder">
+                    <div class="ball"></div>
+                </div>
             </div>
-        </div>
-        <div v-else-if="error === null && currency !== {}">
-            <div>
-                <p style="text-align: center;">
-                    <span style="border: 2px solid whitesmoke;padding: 0.2em;border-radius: 5px;">
-                        {{ currency.from_currency_amount.toFixed(2) }} {{ currency.from_currency }}
-                    </span>
-                    =
-                    <span style="border: 2px solid whitesmoke;padding: 0.2em;border-radius: 5px;">
-                        {{ currency.to_currency_amount.toFixed(2) }} {{ currency.to_currency }}
-                    </span>
-                </p>
-                <small style="font-size: 0.7em;">
-                    last update {{ refresh_date }}
-                </small>
+            <div v-else-if="error === null && currency !== {}">
+                <div>
+                    <p style="text-align: center;">
+                        <span style="border: 2px solid whitesmoke;padding: 0.2em;border-radius: 5px;">
+                            {{ currency.from_currency_amount.toFixed(2) }} {{ currency.from_currency }}
+                        </span>
+                        =
+                        <span style="border: 2px solid whitesmoke;padding: 0.2em;border-radius: 5px;">
+                            {{ currency.to_currency_amount.toFixed(2) }} {{ currency.to_currency }}
+                        </span>
+                    </p>
+                    <small style="font-size: 0.7em;">
+                        last update {{ refresh_date }}
+                    </small>
+                </div>
             </div>
-        </div>
-        <div v-else>
-            <p style="color: red">{{ error }}</p>
+            <div v-else>
+                <p style="color: red">{{ error }}</p>
+            </div>
         </div>
     </div>
 </template>

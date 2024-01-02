@@ -1,3 +1,9 @@
+.container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
 body {
     background-color: #000;
     color: #f2f2f2;
@@ -6,17 +12,34 @@ body {
 .panel-div {
     border: 3px solid #f0f0f0d0;
     border-radius: 25px;
-    max-width: 33%;
-    min-width: 31%;
-    max-height: 95vh;
-    min-height: 80vh;
     padding: 0.4em;
+}
+
+.panel {
+    display: inline-grid;
+    height: 100%;
+}
+
+.section-separator-title {
+    width: 100%;
+    text-align: center;
+    border-top: 1px solid white;
+    padding-top: 5px;
+    margin-top: 5px;
+}
+
+.central-content {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    font-size: 3em;
+    text-align: center;
 }
 
 .panel-title {
     width: 100%;
     text-align: center;
     margin-top: 2px;
+    margin-bottom: 2px;
 }
 
 .link-button {
@@ -65,7 +88,7 @@ body {
     height: 45px;
     left: 17px;
     top: 0px;
-    animation: loading 1.3s linear infinite;
+    animation: loading 1.0s linear infinite;
 }
 
 .ball {

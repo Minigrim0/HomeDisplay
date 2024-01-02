@@ -1,5 +1,5 @@
 <template>
-    <div class="panel-div">
+    <div class="panel panel-div">
         <h3 class="panel-title">
             🚂 Departures 🚂
             <button class="link-button" @click="refresh">🔁</button>
