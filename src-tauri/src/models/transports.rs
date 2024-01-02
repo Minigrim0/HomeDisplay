@@ -155,29 +155,5 @@ impl RealTidAPI {
                 None
             }
         }
-
-//     fetch(`/departures?key=${process.env.REACT_APP_SL_REALTIME_API_KEY}&siteid=${siteId}&timewindow=${process.env.REACT_APP_SL_REALTIME_TIME_WINDOW_MINS}`)
-//         .then(response => response.json())
-//         .then(data => {
-//             if (data.ResponseData != null)
-//             {
-//                 let buses = [];
-//                 for (let bus of data.ResponseData.Buses) {
-//                     buses.push({mode: "bus", line: bus.LineNumber, endStation: bus.Destination, departure: bus.DisplayTime})
-//                 }
-//                 if (buses.length !== 0)
-//                 {
-//                     this.setState({
-//                         nextDeparture: {
-//                             mode: "bus",
-//                             timeToDeparture: buses[0].departure,
-//                             departureInfo: buses[0].line + " mot " + buses[0].endStation
-//                         },
-//                         comingDepartures: buses.splice(1, process.env.REACT_APP_SL_REALTIME_SHOW_AMOUNT),
-//                         deviations: this.state.deviations
-//                     });
-//                 }
-//             }
-//         });
     }
 }

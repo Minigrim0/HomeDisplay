@@ -28,7 +28,7 @@
         "icons/icon.ico"
       ],
       "identifier": "xyz.minigrim0.homedisplay",
-      "targets": "all"
+      "targets": ["deb", "nsis", "msi", "app", "dmg", "updater"]
     },
     "security": {
       "csp": null
@@ -38,7 +38,7 @@
     },
     "windows": [
       {
-        "fullscreen": false,
+        "fullscreen": true,
         "resizable": true,
         "title": "home-display",
         "width": 800,
