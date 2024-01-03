@@ -26,6 +26,7 @@ body {
     border-top: 1px solid white;
     padding-top: 5px;
     margin-top: 5px;
+    margin-bottom: 5px;
 }
 
 .central-content {
@@ -55,10 +56,20 @@ body {
     transition-duration: 0.2s;
 }
 
-.row {
-    display: flex;
-    flex-wrap: wrap;
-    padding: 0 4px;
+.small-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    font-size: 0.8em;
+    text-align: center;
+}
+
+.small-grid-elem {
+    display: inline-grid;
+}
+
+.small-grid-elem.center {
+    border-left: 1px solid white;
+    border-right: 1px solid white;
 }
 
 .link-button:hover {

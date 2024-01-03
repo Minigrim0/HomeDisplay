@@ -24,7 +24,6 @@ impl Conversion {
         let from: f32 = match data.rates.get(&from_currency) {
             Some(value) => *value,
             None => {
-                println!("An error occured while fetching the base currency");
                 0.0
             }
         };
@@ -32,7 +31,6 @@ impl Conversion {
         let to: f32 = match data.rates.get(&to_currency) {
             Some(value) => *value,
             None => {
-                println!("An error occured while fetching the 'to' currency");
                 0.0
             }
         };
@@ -63,7 +61,7 @@ impl Conversion {
         let result = match reqwest::get(url).await {
             Ok(resp) => resp,
             Err(error) => {
-                println!("Unable to fetch weather information ! {}", error.to_string());
+                println!("Error with weather information ! {}", error.to_string());
                 return None;
             }
         };
@@ -75,17 +73,17 @@ impl Conversion {
                         Conversion::from_base(data, from_currency, to_currency)
                     ),
                     Err(err) => {
-                        println!("Error while parsing the weather data: {}", err.to_string());
+                        println!("Error with weather data: {}", err.to_string());
                         None
                     }
                 }
             },
             reqwest::StatusCode::UNAUTHORIZED => {
-                println!("The authorization token is invalid");
+                println!("Invalid token");
                 None
             },
             _ => {
-                println!("Something unexpected happend (Code: {})", result.status());
+                println!("Unexpected error ({})", result.status());
                 None
             }
         }

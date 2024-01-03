@@ -9,20 +9,21 @@
                 <div class="ball"></div>
             </div>
         </div>
-        <div v-else-if="error === null && weather !== {}">
+        <div v-else-if="error === null">
             <h3 class="section-separator-title">🌡️ Temperature 🌡️</h3>
             <div>
                 <p class="central-content">{{ weather.main.temp.toFixed(0) }}°C</p>
-                <div style="font-size: 0.8em;text-align: center" class="row">
-                    <p style="max-width: 33%;min-width: 30%;border-right: 1px solid white;">Feel {{ weather.main.feels_like.toFixed(0) }}°C</p>
-                    <p style="max-width: 33%;min-width: 30%;border-right: 1px solid white;">⬇️ {{ weather.main.temp_min.toFixed(0) }}°C </p>
-                    <p style="max-width: 33%;min-width: 30%;"> ⬆️ {{ weather.main.temp_max.toFixed(0) }}°C</p>
+                <div class="small-grid">
+                    <p class="small-grid-elem">Feel {{ weather.main.feels_like.toFixed(0) }}°C</p>
+                    <p class="small-grid-elem center">⬇️ {{ weather.main.temp_min.toFixed(0) }}°C </p>
+                    <p class="small-grid-elem"> ⬆️ {{ weather.main.temp_max.toFixed(0) }}°C</p>
                 </div>
             </div>
             <h3 class="section-separator-title">☀️ Weather ☀️</h3>
             <div style="text-align: center;width: 100%;">
                 <img
                     class="central-content"
+                    style="max-height: 64px;"
                     :src="`src/assets/img/owm/icons/${this.weather.weather[0].icon}@2x.png`"
                     alt="weather icon"
                 />
