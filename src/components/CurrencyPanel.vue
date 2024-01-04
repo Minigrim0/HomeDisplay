@@ -1,6 +1,6 @@
 <template>
     <div class="panel">
-        <h1 style="width: 100%;text-align: center;max-height: 5vh">HomeDisplay</h1>
+        <h1 style="width: 100%;text-align: center;max-height: 5vh">Home Display</h1>
         <div class="panel-div">
             <h3 class="panel-title">
                 💲 Currency 💲
@@ -68,6 +68,9 @@ export default {
     },
     mounted(){
         this.load_currency_data();
+        setInterval(() => {
+            this.load_currency_data();
+        }, 3600000);
     }
 }
 </script>

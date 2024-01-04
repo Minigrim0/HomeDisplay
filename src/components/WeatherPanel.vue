@@ -31,9 +31,11 @@
             </div>
             <h3 class="section-separator-title">🌕 Day time ☀️</h3>
             <div style="text-align: center;width: 100%;">
-                <p>Rise {{ sunrise }}</p>
-                <p>Set {{ sunset }}</p>
+                <p>🌅 {{ sunrise }} 🌄 {{ sunset }}</p>
             </div>
+            <small style="font-size: 0.7em;">
+                {{ time_since_last_update }} minute{{ time_since_last_update > 1 ? 's' : '' }} ago.
+            </small>
         </div>
         <div v-else>
             <p style="color: red">{{ error }}</p>
@@ -50,17 +52,19 @@ export default {
         return {
             weather: {},
             loading: true,
-            error: null
+            error: null,
+            last_update: new Date(),
+            time_since_last_update: 0
         }
     },
     computed: {
         sunrise() {
             let sunrise_time = new Date(this.weather.sys.sunrise * 1000)
-            return `${sunrise_time.getHours()}:${sunrise_time.getMinutes()}`;
+            return `${sunrise_time.getHours() < 10 ? '0' : ''}${sunrise_time.getHours()}:${sunrise_time.getMinutes() < 10 ? '0' : ''}${sunrise_time.getMinutes()}`;
         },
         sunset() {
             let sunset_time = new Date(this.weather.sys.sunset * 1000);
-            return `${sunset_time.getHours()}:${sunset_time.getMinutes()}`;
+            return `${sunset_time.getHours() < 10 ? '0' : ''}${sunset_time.getHours()}:${sunset_time.getMinutes() < 10 ? '0' : ''}${sunset_time.getMinutes()}`;
         }
     },
     methods: {
@@ -70,11 +74,26 @@ export default {
             invoke("get_weather")
                 .then(response => this.weather = response)
                 .catch(error => this.error = error)
-                .finally(() => this.loading = false);
+                .finally(() => {
+                    this.loading = false
+                    this.last_update = new Date();
+                });
+        },
+        upd_timer(diff){
+            this.time_since_last_update = Math.floor(diff / 60000);
+        },
+        dateDiffInDays(a, b) {
+            return b - a;
         }
     },
     mounted(){
         this.load_weather_data();
+        setInterval(() => {
+            this.upd_timer(this.dateDiffInDays(this.last_update, new Date()));
+        }, 1000);
+        setInterval(() => {
+            this.load_weather_data();
+        }, 1800000);
     }
 }
 </script>
