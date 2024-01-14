@@ -19,6 +19,13 @@ pub struct PlatsUppSlagAPI {
     pub response_data: Vec<BusStop>,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "PascalCase")]
+pub struct PlatsUppSlagAPIError {
+    pub status_code: i32,
+    pub message: Option<String>,
+}
+
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "PascalCase")]
@@ -83,18 +90,35 @@ impl BusStop {
             }
         };
 
-        match result.status() {
+        let result_status = result.status();
+        let result_body = match result.text().await {
+            Ok(body) => body,
+            Err(err) => {
+                println!("Unable to fetch bus stops, Err: {}", err);
+                return None;
+            }
+        };
+        
+        match result_status {
             reqwest::StatusCode::OK => {
-                match result.json::<PlatsUppSlagAPI>().await {
+                match serde_json::from_str::<PlatsUppSlagAPI>(&result_body.clone()) {
                     Ok(data) => {
                         match data.response_data.first() {
                             Some(stop) => Some((*stop).clone()),
                             None => None
                         }
                     },
-                    Err(err) => {
-                        println!("An error occured while fetching the bus stops: Err {}", err.to_string());
-                        None
+                    Err(_err) => {
+                        match serde_json::from_str::<PlatsUppSlagAPIError>(&result_body) {
+                            Ok(error) => {
+                                println!("An API error occured while fetching the bus stops: {}", error.message.unwrap());
+                                None
+                            },
+                            Err(err) => {
+                                println!("An error occured while fetching the bus stops: {}", err.to_string());
+                                None
+                            }
+                        }
                     }
                 }
             },
