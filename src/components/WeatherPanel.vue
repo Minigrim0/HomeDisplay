@@ -24,7 +24,7 @@
                 <img
                     class="central-content"
                     style="max-height: 64px;"
-                    :src="`src/assets/img/owm/icons/${this.weather.weather[0].icon}@2x.png`"
+                    :src="`/img/owm/icons/${this.weather.weather[0].icon}@2x.png`"
                     alt="weather icon"
                 />
                 <p>{{ weather.weather[0].description }}</p>
