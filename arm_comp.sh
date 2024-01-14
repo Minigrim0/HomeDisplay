@@ -1,8 +1,10 @@
+#!/bin/bash
+
 echo 'Installing ARM cross-compilers...'
 rustup target add aarch64-unknown-linux-gnu
 sudo apt install gcc-aarch64-linux-gnu -y
 echo 'Done'
-echo 'Open or create the file <project-root>/.cargo/config.toml and add the following configurations accordingly:'
+echo 'Open or create the file <project-root>/.cargo/config.toml and add the following configurations if needed:'
 echo '--------------------------------------'
 echo '[target.armv7-unknown-linux-gnueabihf]'
 echo 'linker = "arm-linux-gnueabihf-gcc"    '
@@ -10,8 +12,7 @@ echo '                                      '
 echo '[target.aarch64-unknown-linux-gnu]    '
 echo 'linker = "aarch64-linux-gnu-gcc"      '
 echo '--------------------------------------'
-echo 'Press Enter to continue'
-read
+read -n 1 -s -r -p "Press any key to continue"
 echo 'Installing ARM64 cross-compilers...'
 sudo dpkg --add-architecture arm64
 echo 'You need to add the following line to /etc/apt/sources.list:'
@@ -27,8 +28,7 @@ echo 'deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security
 echo 'deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security universe                            '
 echo 'deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security multiverse                          '
 echo '---------------------------------------------------------------------------------------------------------------'
-echo 'Press Enter to continue'
-read
+read -n 1 -s -r -p "Press any key to continue"
 echo 'Updating apt...'
 sudo apt-get update && sudo apt-get upgrade -y
 echo 'Installing required webkit dependencies...'

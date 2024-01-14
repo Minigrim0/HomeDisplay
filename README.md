@@ -43,6 +43,9 @@ export SL_PLACE_BUS_STOPS=<stop_name>,...
 - [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
 
 
+## Arm compilation
+This project is intended to run on a raspberryPi. The script `arm_comp.sh` serve to compile and build a `.deb` package for raspbian. Only ubuntu is supported as of now.
+
 # APIs
 * [openweathermap](https://home.openweathermap.org/) For weather information
 * [openexchangerate](https://openexchangerates.org/) For currency conversion
