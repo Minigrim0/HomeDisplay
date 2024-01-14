@@ -1,6 +1,10 @@
 <template>
     <div class="panel">
-        <h1 style="width: 100%;text-align: center;max-height: 5vh">Home Display</h1>
+        <div style="width: 100%;text-align: center;">
+            <h1>Home Display</h1>
+            <p class="bot-text">{{ current_date }}</p>
+            <p class="top-text">{{ current_time }}</p>
+        </div>
         <div class="panel-div">
             <h3 class="panel-title">
                 💲 Currency 💲
@@ -43,13 +47,17 @@ export default {
         return {
             currency: {},
             loading: true,
-            error: null
+            error: null,
+            current_time: null,
+            current_date: null,
+            current_date_interval: null,
+            clock_interval: null
         }
     },
     computed: {
         refresh_date() {
             let date_fetched = new Date(this.currency.timestamp * 1000);
-            let date = `${this.zeroPad(date_fetched.getDay(), 2)}/${this.zeroPad(date_fetched.getMonth()+1, 2)}/${date_fetched.getFullYear()}`;
+            let date = `${this.zeroPad(date_fetched.getDate(), 2)}/${this.zeroPad(date_fetched.getMonth()+1, 2)}/${date_fetched.getFullYear()}`;
             let time = `${this.zeroPad(date_fetched.getHours(), 2)}:${this.zeroPad(date_fetched.getMinutes(), 2)}`;
             return `${date} ${time}`;
         }
@@ -64,6 +72,14 @@ export default {
                 .then(response => this.currency = response)
                 .catch(error => this.error = error)
                 .finally(() => this.loading = false);
+        },
+        update_current_date(){
+            let date = new Date();
+            this.current_date = `${this.zeroPad(date.getDate(), 2)}/${this.zeroPad(date.getMonth()+1, 2)}/${date.getFullYear()}`;
+        },
+        update_current_time() {
+            let date = new Date();
+            this.current_time = `${this.zeroPad(date.getHours(), 2)}:${this.zeroPad(date.getMinutes(), 2)}:${this.zeroPad(date.getSeconds(), 2)}`;
         }
     },
     mounted(){
@@ -71,6 +87,31 @@ export default {
         setInterval(() => {
             this.load_currency_data();
         }, 3600000);
+
+        this.update_current_time();
+        this.update_current_date();
+
+        this.clock_interval = setInterval(() => {
+            this.update_current_time();
+        }, 1000);
+        this.current_date_interval = setInterval(() => {
+            this.update_current_date();
+        }, 3600000);
     }
 }
 </script>
+
+
+<style scoped>
+.top-text {
+    font-size: 2.5em;
+    margin: 0;
+    width: 100%;
+}
+
+.bot-text {
+    font-size: 1.9em;
+    margin: 0;
+    width: 100%;
+}
+</style>

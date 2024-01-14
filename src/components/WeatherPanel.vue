@@ -60,11 +60,11 @@ export default {
     computed: {
         sunrise() {
             let sunrise_time = new Date(this.weather.sys.sunrise * 1000)
-            return `${sunrise_time.getHours() < 10 ? '0' : ''}${sunrise_time.getHours()}:${sunrise_time.getMinutes() < 10 ? '0' : ''}${sunrise_time.getMinutes()}`;
+            return `${this.zeroPad(sunrise_time.getHours(), 2)}:${this.zeroPad(sunrise_time.getMinutes())}`;
         },
         sunset() {
             let sunset_time = new Date(this.weather.sys.sunset * 1000);
-            return `${sunset_time.getHours() < 10 ? '0' : ''}${sunset_time.getHours()}:${sunset_time.getMinutes() < 10 ? '0' : ''}${sunset_time.getMinutes()}`;
+            return `${this.zeroPad(sunset_time.getHours(), 2)}:${this.zeroPad(sunset_time.getMinutes(), 2)}`;
         }
     },
     methods: {
@@ -84,7 +84,10 @@ export default {
         },
         dateDiffInDays(a, b) {
             return b - a;
-        }
+        },
+        zeroPad (num, places){
+            return String(num).padStart(places, '0')
+        },
     },
     mounted(){
         this.load_weather_data();
