@@ -37,8 +37,9 @@ jobs:
             # Build the application
             cargo tauri build --config '{"package": {"version": "${{ github.event.release.tag_name }}"}}'
 
-      - name: Upload deb bundle
-        uses: actions/upload-artifact@v3
-        with:
-          name: Debian Bundle
-          path: ${{ github.workspace }}/src-tauri/target/release/bundle/deb/home-display*.deb
+      - uses: actions/checkout@v3
+      - name: Upload Release Asset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run:
+          gh release upload ${{ github.event.release.tag_name }} ${{ github.workspace }}/src-tauri/target/release/bundle/deb/home-display*.deb
