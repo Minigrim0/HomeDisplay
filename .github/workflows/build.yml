@@ -38,7 +38,6 @@ jobs:
             # Build the application
             cargo tauri build --config '{"package": {"version": "${{ github.event.release.tag_name }}"}}'
 
-      - uses: actions/checkout@v3
       - name: Upload Release Asset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
