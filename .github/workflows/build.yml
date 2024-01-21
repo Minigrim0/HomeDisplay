@@ -1,6 +1,7 @@
 name: Raspberry Pi package
 on:
   release:
+    types: [published]
 
 jobs:
   build:
