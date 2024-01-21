@@ -1,6 +1,6 @@
 name: Raspberry Pi package
 on:
-  workflow_dispatch:
+  release:
 
 jobs:
   build:
@@ -29,16 +29,16 @@ jobs:
             curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash
             # Install framework specific packages
             apt-get install -y nodejs
-            npm install next@latest react@latest react-dom@latest eslint-config-next@latest
             # Install build tools and tauri-cli requirements
             apt-get install -y libwebkit2gtk-4.0-dev build-essential wget libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
             cargo install tauri-cli
             # Install frontend dependencies
             npm install
             # Build the application
-            cargo tauri build
+            cargo tauri build --config '{"package": {"version": "${{ github.event.release.tag_name }}"}}'
+
       - name: Upload deb bundle
         uses: actions/upload-artifact@v3
         with:
           name: Debian Bundle
-          path: ${{ github.workspace }}/target/release/bundle/deb/home-display*.deb
+          path: ${{ github.workspace }}/src-tauri/target/release/bundle/deb/home-display*.deb
