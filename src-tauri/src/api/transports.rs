@@ -1,32 +1,12 @@
 extern crate redis;
 use std::env::var;
-use redis::Commands;
 
 use crate::models::transports::{BusStop, RealTidAPI, StopDepartures};
 use crate::database::connection;
 
 
-pub fn check_bus_stop(stop_name: String) -> Result<BusStop, String> {
-    let client = match redis::Client::open(
-        format!("redis://{}:{}/",
-            std::env::var("REDIS_HOST").expect_err("REDIS_HOST variable is not set"),
-            std::env::var("REDIS_PORT").expect_err("REDIS_PORT variable is not set"),
-        ))
-    {
-            Ok(client) => client,
-            Err(_) => {
-                return Err("Could not connect to redis.\nIs the database running at the given host & port ?".to_string())
-            }
-    };
-
-    let mut con = match client.get_connection() {
-        Ok(connection) => connection,
-        Err(_) => {
-            return Err("Could not connect to redis.\nIs the database running at the given host & port ?".to_string())
-        }
-    };
-
-    match con.get::<String, String>(format!("homedisplay:{}", stop_name)) {
+pub async fn check_bus_stop(stop_name: String) -> Result<BusStop, String> {
+    match connection::get_redis_key(format!("homedisplay:{}", stop_name)).await {
         Ok(place_id) => match serde_json::from_str(&place_id) {
             Ok(value) => Ok(value),
             Err(error) => Err(format!("Could not deserialize busstop from redis: {}\nIs the data malformed ?", error))
@@ -65,7 +45,7 @@ pub async fn get_bus_stops() -> Result<Vec<BusStop>, String> {
     let mut bus_stops_array: Vec<BusStop> = vec![];
     let stops: &mut Vec<BusStop> = &mut bus_stops_array;
     for stop in bus_stops.iter() {
-        match check_bus_stop(stop.to_string()) {
+        match check_bus_stop(stop.to_string()).await {
             Ok(place_id) => stops.push(place_id),  // The bus stop is cached in redis
             Err(_) => {  // The bus stop is not in redis, fetch it from the API
                 match BusStop::get(api_key.clone(), root_url.clone(), (*stop).to_string()).await {
