@@ -2,8 +2,10 @@ use crate::models::currency::Conversion;
 use std::env::var;
 
 pub async fn fetch_conversion() -> Result<Conversion, String> {
-    let api_key: String = var("OER_API_KEY")
-        .expect("OER_API_KEY is required to run this hook");
+    let api_key: String = match var("OER_API_KEY") {
+        Ok(key) => key,
+        Err(_) => return Err("Missing API key for Open Exchange Rates, can't fetch new conversion (export OER_API_KEY)".to_string())
+    };
 
     let from_currency: String = var("OER_FROM").unwrap_or(
         {
