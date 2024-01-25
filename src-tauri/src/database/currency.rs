@@ -21,18 +21,9 @@ pub fn store_conversion(conversion: Conversion) -> Result<Conversion, String> {
 
 pub async fn fetch_current_conversion() -> Result<Conversion, String> {
     match connection::get_redis_key("homedisplay:conversion".to_string()).await {
-        Ok(serialized) => {
-            match serde_json::from_str(serialized.as_str()) {
-                Ok(conversion) => Ok(conversion),
-                Err(error) => {
-                    Err(
-                        format!(
-                            "An error occured while deserializing the conversion: {}",
-                            error.to_string()
-                        )
-                    )
-                }
-            }
+        Ok(serialized) => match serde_json::from_str(serialized.as_str()) {
+            Ok(conversion) => Ok(conversion),
+            Err(error) => Err(format!("An error occured while deserializing the conversion: {}", error.to_string()))
         },
         Err(err) => Err(err)
     }

@@ -23,9 +23,7 @@ pub async fn fetch_current_weather() -> Result<WeatherInfo, String> {
     match connection::get_redis_key("homedisplay:weather".to_string()).await {
         Ok(serialized) => match serde_json::from_str(serialized.as_str()) {
             Ok(conversion) => Ok(conversion),
-            Err(error) => {
-                return Err(format!("An error occured while deserializing the weather: {}", error.to_string()));
-            }
+            Err(error) => return Err(format!("An error occured while deserializing the weather: {}", error.to_string()))
         },
         Err(err) => Err(err)
     }

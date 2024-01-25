@@ -19,16 +19,12 @@ pub async fn check_bus_stop(stop_name: String) -> Result<BusStop, String> {
 pub async fn get_bus_stops() -> Result<Vec<BusStop>, String> {
     let api_key: String = match var("SL_PLACE_API_KEY") {
         Ok(key) => key,
-        Err(_) => {
-            return Err("Missing API key for SL's platsuppslag, can't fetch new busstops (export SL_PLACE_API_KEY)".to_string());
-        }
+        Err(_) => return Err("Missing API key for SL's platsuppslag, can't fetch new busstops (export SL_PLACE_API_KEY)".to_string())
     };
 
     let root_url: String = match var("SL_PLACE_ROOT_URL") {
         Ok(url) => url,
-        Err(_) => {
-            return Err("Missing Root URL for SL's platsuppslag, can't fetch site ids (export SL_PLACE_ROOT_URL)".to_string());
-        }
+        Err(_) => return Err("Missing Root URL for SL's platsuppslag, can't fetch site ids (export SL_PLACE_ROOT_URL)".to_string())
     };
 
     let bus_stop_list: String;
@@ -37,9 +33,7 @@ pub async fn get_bus_stops() -> Result<Vec<BusStop>, String> {
             bus_stop_list = stops.clone();
             bus_stop_list.split(",").collect::<Vec<&str>>()
         },
-        Err(_) => {
-            return Err("Missing bus stops, can't define what to fetch (export SL_PLACE_BUS_STOPS)".to_string());
-        }
+        Err(_) => return Err("Missing bus stops, can't define what to fetch (export SL_PLACE_BUS_STOPS)".to_string())
     };
 
     let mut bus_stops_array: Vec<BusStop> = vec![];
@@ -47,11 +41,9 @@ pub async fn get_bus_stops() -> Result<Vec<BusStop>, String> {
     for stop in bus_stops.iter() {
         match check_bus_stop(stop.to_string()).await {
             Ok(place_id) => stops.push(place_id),  // The bus stop is cached in redis
-            Err(_) => {  // The bus stop is not in redis, fetch it from the API
-                match BusStop::get(api_key.clone(), root_url.clone(), (*stop).to_string()).await {
-                    Ok(bus_stop) => stops.push(bus_stop),
-                    Err(_) => continue
-                }
+            Err(_) => match BusStop::get(api_key.clone(), root_url.clone(), (*stop).to_string()).await {  // The bus stop is not in redis, fetch it from the API
+                Ok(bus_stop) => stops.push(bus_stop),
+                Err(_) => continue
             }
         }
     };

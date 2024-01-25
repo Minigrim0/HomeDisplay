@@ -23,16 +23,12 @@ impl Conversion {
     pub fn from_base(data: APIResponse, from_currency: String, to_currency: String) -> Conversion {
         let from: f32 = match data.rates.get(&from_currency) {
             Some(value) => *value,
-            None => {
-                0.0
-            }
+            None => 0.0
         };
 
         let to: f32 = match data.rates.get(&to_currency) {
             Some(value) => *value,
-            None => {
-                0.0
-            }
+            None => 0.0
         };
 
         Conversion {
@@ -52,28 +48,18 @@ impl Conversion {
             )
         ) {
             Ok(url) => url,
-            Err(err) => {
-                return Err(format!("Could not parse URL: {}", err));
-            }
+            Err(err) => return Err(format!("Could not parse URL: {}", err))
         };
 
         let result = match reqwest::get(url).await {
             Ok(resp) => resp,
-            Err(error) => {
-                return Err(format!("Error with weather information ! {}", error.to_string()));
-            }
+            Err(error) => return Err(format!("Error with weather information ! {}", error.to_string()))
         };
 
         match result.status() {
-            reqwest::StatusCode::OK => {
-                match result.json::<APIResponse>().await {
-                    Ok(data) => Ok(
-                        Conversion::from_base(data, from_currency, to_currency)
-                    ),
-                    Err(err) => {
-                        Err(format!("Error with weather data: {}", err.to_string()))
-                    }
-                }
+            reqwest::StatusCode::OK => match result.json::<APIResponse>().await {
+                Ok(data) => Ok(Conversion::from_base(data, from_currency, to_currency)),
+                Err(err) => Err(format!("Error with weather data: {}", err.to_string()))
             },
             reqwest::StatusCode::UNAUTHORIZED => Err("Openweathermap token is invalid".to_string()),
             _ => Err(format!("Unexpected error ({})", result.status()))

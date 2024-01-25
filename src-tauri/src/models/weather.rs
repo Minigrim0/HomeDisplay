@@ -58,16 +58,12 @@ impl WeatherInfo {
             )
         ) {
             Ok(url) => url,
-            Err(err) => {
-                return Err(format!("Could not parse URL: {}", err));
-            }
+            Err(err) => return Err(format!("Could not parse URL: {}", err))
         };
 
         let result = match reqwest::get(url).await {
             Ok(resp) => resp,
-            Err(err) => {
-                return Err(format!("Unable to fetch weather information {}", err.to_string()));
-            }
+            Err(err) => return Err(format!("Unable to fetch weather information {}", err.to_string()))
         };
 
         match result.status() {

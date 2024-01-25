@@ -10,9 +10,7 @@ pub fn get_redis_connection() -> Result<redis::Connection, String> {
         ))
     {
             Ok(client) => client,
-            Err(_) => {
-                return Err("Could not connect to redis.\nIs the database running at the given host & port ?".to_string())
-            }
+            Err(_) => return Err("Could not connect to redis.\nIs the database running at the given host & port ?".to_string())
     };
 
     match client.get_connection() {

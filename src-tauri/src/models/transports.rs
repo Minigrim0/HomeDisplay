@@ -93,17 +93,13 @@ impl BusStop {
         match result_status {
             reqwest::StatusCode::OK => {
                 match serde_json::from_str::<PlatsUppSlagAPI>(&result_body.clone()) {
-                    Ok(data) => {
-                        match data.response_data.first() {
-                            Some(stop) => Ok((*stop).clone()),
-                            None => Err("".to_string())
-                        }
+                    Ok(data) => match data.response_data.first() {
+                        Some(stop) => Ok((*stop).clone()),
+                        None => Err("".to_string())
                     },
-                    Err(_err) => {
-                        match serde_json::from_str::<PlatsUppSlagAPIError>(&result_body) {
-                            Ok(error) => Err(format!("An API error occured while fetching the bus stops: {}", error.message.unwrap())),
-                            Err(err) => Err(format!("An error occured while fetching the bus stops: {}", err.to_string()))
-                        }
+                    Err(_err) => match serde_json::from_str::<PlatsUppSlagAPIError>(&result_body) {
+                        Ok(error) => Err(format!("An API error occured while fetching the bus stops: {}", error.message.unwrap())),
+                        Err(err) => Err(format!("An error occured while fetching the bus stops: {}", err.to_string()))
                     }
                 }
             },
@@ -139,8 +135,6 @@ impl RealTidAPI {
 
         match result.status() {
             reqwest::StatusCode::OK => {
-                // println!("Result: {:?}", result.text().await);
-                // None
                 match result.json::<RealTidAPI>().await {
                     Ok(timings) => Some(timings),
                     Err(error) => {

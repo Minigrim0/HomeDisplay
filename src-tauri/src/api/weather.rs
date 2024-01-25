@@ -35,7 +35,7 @@ pub async fn fetch_weather() -> Result<WeatherInfo, String> {
         },
         Err(_) => {
             println!("Using default latitude value 17.0 (Err: Missing OWM_LON)");
-                default_lon
+            default_lon
         }
     };
 
