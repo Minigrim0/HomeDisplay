@@ -1,7 +1,7 @@
 use crate::models::currency::Conversion;
 use std::env::var;
 
-pub async fn fetch_conversion() -> Option<Conversion> {
+pub async fn fetch_conversion() -> Result<Conversion, String> {
     let api_key: String = var("OER_API_KEY")
         .expect("OER_API_KEY is required to run this hook");
 

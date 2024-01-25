@@ -50,7 +50,7 @@ pub struct WeatherInfo {
 }
 
 impl WeatherInfo {
-    pub async fn get(latitude: f64, longitude: f64, api_key: &String) -> Option<WeatherInfo> {
+    pub async fn get(latitude: f64, longitude: f64, api_key: &String) -> Result<WeatherInfo, String> {
         let url: Url = match Url::parse(
             &*format!(
                 "https://api.openweathermap.org/data/2.5/weather?lat={}&lon={}&units=metric&appid={}",
@@ -59,37 +59,26 @@ impl WeatherInfo {
         ) {
             Ok(url) => url,
             Err(err) => {
-                println!("Could not parse URL: {}", err);
-                return None;
+                return Err(format!("Could not parse URL: {}", err));
             }
         };
 
         let result = match reqwest::get(url).await {
             Ok(resp) => resp,
-            Err(_) => {
-                println!("Unable to fetch weather information");
-                return None;
+            Err(err) => {
+                return Err(format!("Unable to fetch weather information {}", err.to_string()));
             }
         };
 
         match result.status() {
             reqwest::StatusCode::OK => {
                 match result.json::<WeatherInfo>().await {
-                    Ok(data) => Some(data),
-                    Err(err) => {
-                        println!("Error while parsing the weather data: {}", err.to_string());
-                        None
-                    }
+                    Ok(data) => Ok(data),
+                    Err(err) => Err(format!("Error while parsing the weather data: {}", err.to_string()))
                 }
             },
-            reqwest::StatusCode::UNAUTHORIZED => {
-                println!("Need to grab a new token");
-                None
-            },
-            _ => {
-                println!("Uh oh! Something unexpected happened.");
-                None
-            },
+            reqwest::StatusCode::UNAUTHORIZED => Err(format!("Openweather map API key is invalid")),
+            _ => Err("Uh oh! Something unexpected happened.".to_string()),
         }
     }
 }

@@ -21,8 +21,11 @@
                     No timings could be fetched 😥
                 </div>
             </div>
+            <small>{{ time_since_last_update }} seconds ago. <span v-if="refreshing">refreshing...</span></small>
         </div>
-        <small>{{ time_since_last_update }} seconds ago. <span v-if="refreshing">refreshing...</span></small>
+        <div v-else>
+            <p style="color: red">{{ error }}</p>
+        </div>
     </div>
 </template>
 
@@ -55,10 +58,9 @@ export default {
                 })
                 .catch(error => {
                     this.error = error;
-                    console.log("Error !", error)
                 })
                 .finally(() => {
-                    this.loading = false
+                    this.loading = false;
                     this.refreshing = false;
                 });
         },

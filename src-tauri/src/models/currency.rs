@@ -44,7 +44,7 @@ impl Conversion {
         }
     }
 
-    pub async fn get(from_currency: String, to_currency: String, api_key: String) -> Option<Conversion> {
+    pub async fn get(from_currency: String, to_currency: String, api_key: String) -> Result<Conversion, String> {
         let url: Url = match Url::parse(
             &*format!(
                 "https://openexchangerates.org/api/latest.json?app_id={}",
@@ -53,39 +53,30 @@ impl Conversion {
         ) {
             Ok(url) => url,
             Err(err) => {
-                println!("Could not parse URL: {}", err);
-                return None;
+                return Err(format!("Could not parse URL: {}", err));
             }
         };
 
         let result = match reqwest::get(url).await {
             Ok(resp) => resp,
             Err(error) => {
-                println!("Error with weather information ! {}", error.to_string());
-                return None;
+                return Err(format!("Error with weather information ! {}", error.to_string()));
             }
         };
 
         match result.status() {
             reqwest::StatusCode::OK => {
                 match result.json::<APIResponse>().await {
-                    Ok(data) => Some(
+                    Ok(data) => Ok(
                         Conversion::from_base(data, from_currency, to_currency)
                     ),
                     Err(err) => {
-                        println!("Error with weather data: {}", err.to_string());
-                        None
+                        Err(format!("Error with weather data: {}", err.to_string()))
                     }
                 }
             },
-            reqwest::StatusCode::UNAUTHORIZED => {
-                println!("Invalid token");
-                None
-            },
-            _ => {
-                println!("Unexpected error ({})", result.status());
-                None
-            }
+            reqwest::StatusCode::UNAUTHORIZED => Err("Openweathermap token is invalid".to_string()),
+            _ => Err(format!("Unexpected error ({})", result.status()))
         }
     }
 }

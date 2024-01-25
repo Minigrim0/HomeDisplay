@@ -2,12 +2,14 @@ use crate::models::weather::WeatherInfo;
 use std::env::var;
 
 
-pub async fn fetch_weather() -> Option<WeatherInfo> {
+pub async fn fetch_weather() -> Result<WeatherInfo, String> {
     let default_lat = 59.0;
     let default_lon = 17.0;
 
-    let api_key = var("OWM_API_KEY")
-        .expect("OWM_API_KEY is required to run this hook");
+    let api_key = match var("OWM_API_KEY") {
+        Ok(k) => k,
+        Err(_) => return Err("OWM_API_KEY is required to run this application".to_string())
+    };
 
     let latitude: f64 = match var("OWM_LAT") {
         Ok(str_lat) => match str_lat.parse::<f64>() {

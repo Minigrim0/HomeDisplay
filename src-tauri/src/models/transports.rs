@@ -68,7 +68,7 @@ pub struct StopDepartures {
 
 
 impl BusStop {
-    pub async fn get(api_key: String, base_url: String, bus_stop: String) -> Option<BusStop> {
+    pub async fn get(api_key: String, base_url: String, bus_stop: String) -> Result<BusStop, String> {
         let url: Url = match Url::parse(
             &*format!(
                 "{}?key={}&searchstring={}",
@@ -76,60 +76,39 @@ impl BusStop {
             )
         ) {
             Ok(url) => url,
-            Err(err) => {
-                println!("Could not parse URL: {}", err);
-                return None;
-            }
+            Err(err) => return Err(format!("Could not parse URL: {}", err))
         };
 
         let result = match reqwest::get(url).await {
             Ok(resp) => resp,
-            Err(err) => {
-                println!("Unable to fetch bus stops, Err: {}", err);
-                return None;
-            }
+            Err(err) => return Err(format!("Unable to fetch bus stops, Err: {}", err))
         };
 
         let result_status = result.status();
         let result_body = match result.text().await {
             Ok(body) => body,
-            Err(err) => {
-                println!("Unable to fetch bus stops, Err: {}", err);
-                return None;
-            }
+            Err(err) => return Err(format!("Unable to fetch bus stops, Err: {}", err))
         };
-        
+
         match result_status {
             reqwest::StatusCode::OK => {
                 match serde_json::from_str::<PlatsUppSlagAPI>(&result_body.clone()) {
                     Ok(data) => {
                         match data.response_data.first() {
-                            Some(stop) => Some((*stop).clone()),
-                            None => None
+                            Some(stop) => Ok((*stop).clone()),
+                            None => Err("".to_string())
                         }
                     },
                     Err(_err) => {
                         match serde_json::from_str::<PlatsUppSlagAPIError>(&result_body) {
-                            Ok(error) => {
-                                println!("An API error occured while fetching the bus stops: {}", error.message.unwrap());
-                                None
-                            },
-                            Err(err) => {
-                                println!("An error occured while fetching the bus stops: {}", err.to_string());
-                                None
-                            }
+                            Ok(error) => Err(format!("An API error occured while fetching the bus stops: {}", error.message.unwrap())),
+                            Err(err) => Err(format!("An error occured while fetching the bus stops: {}", err.to_string()))
                         }
                     }
                 }
             },
-            reqwest::StatusCode::UNAUTHORIZED => {
-                println!("Unauthorized to fetch bus stops, check the API key");
-                None
-            },
-            _ => {
-                println!("Uh oh! Something unexpected happened while fetching bus stops");
-                None
-            },
+            reqwest::StatusCode::UNAUTHORIZED => Err(format!("Unauthorized to fetch bus stops, check the API key")),
+            _ => Err(format!("Uh oh! Something unexpected happened while fetching bus stops")),
         }
     }
 }
