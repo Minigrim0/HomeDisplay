@@ -1,7 +1,7 @@
 <template>
     <div class="panel">
         <div style="width: 100%;text-align: center;">
-            <h1>Home Display</h1>
+            <h1>🏠 Home Display 🏠</h1>
             <p class="bot-text">{{ current_date }}</p>
             <p class="top-text">{{ current_time }}</p>
         </div>
