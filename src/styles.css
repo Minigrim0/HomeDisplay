@@ -2,16 +2,15 @@ body {
     background-color: #000;
     color: #f2f2f2;
     margin: 0;
-    padding: 1%;
+    padding: 1vh;
 }
 
 .container {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
-    height: 96vh;
+    height: 98vh;
 }
-
 
 .panel-div {
     border: 3px solid #f0f0f0d0;
@@ -21,6 +20,7 @@ body {
 
 .panel {
     display: inline-grid;
+    max-height: 100%;
 }
 
 .section-separator-title {
