@@ -27,11 +27,11 @@ pub async fn get_bus_stops() -> Result<Vec<BusStop>, String> {
         Err(_) => return Err("Missing Root URL for SL's platsuppslag, can't fetch site ids (export SL_PLACE_ROOT_URL)".to_string())
     };
 
-    let bus_stop_list: String;
+    let bus_stops_str: String;
     let bus_stops: Vec<&str> = match var("SL_PLACE_BUS_STOPS") {
         Ok(stops) => {
-            bus_stop_list = stops.clone();
-            bus_stop_list.split(",").collect::<Vec<&str>>()
+            bus_stops_str = stops;
+            bus_stops_str.split(",").collect::<Vec<&str>>()
         },
         Err(_) => return Err("Missing bus stops, can't define what to fetch (export SL_PLACE_BUS_STOPS)".to_string())
     };
@@ -41,7 +41,7 @@ pub async fn get_bus_stops() -> Result<Vec<BusStop>, String> {
     for stop in bus_stops.iter() {
         match check_bus_stop(stop.to_string()).await {
             Ok(place_id) => stops.push(place_id),  // The bus stop is cached in redis
-            Err(_) => match BusStop::get(api_key.clone(), root_url.clone(), (*stop).to_string()).await {  // The bus stop is not in redis, fetch it from the API
+            Err(_) => match BusStop::get(&api_key, &root_url, &(*stop).to_string()).await {  // The bus stop is not in redis, fetch it from the API
                 Ok(bus_stop) => stops.push(bus_stop),
                 Err(_) => continue
             }
@@ -85,7 +85,7 @@ pub async fn get_all_departures() -> Result<Vec<StopDepartures>, String> {
                 };
 
                 // Fetch departures for this stop
-                let res: RealTidAPI = match RealTidAPI::get(api_key.clone(), base_url.clone(), stop.clone()).await {
+                let res: RealTidAPI = match RealTidAPI::get(&api_key, &base_url, &stop).await {
                     None => {
                         println!("Got no departure information for stop: {}", stop.name);
                         continue;
@@ -93,7 +93,7 @@ pub async fn get_all_departures() -> Result<Vec<StopDepartures>, String> {
                     Some(information) => information
                 };
 
-                departures.push(StopDepartures { stop: stop, departures: res.response_data });
+                departures.push(StopDepartures { stop, departures: res.response_data });
             }
         },
         Err(err) => return Err(err)

@@ -68,7 +68,7 @@ pub struct StopDepartures {
 
 
 impl BusStop {
-    pub async fn get(api_key: String, base_url: String, bus_stop: String) -> Result<BusStop, String> {
+    pub async fn get(api_key: &String, base_url: &String, bus_stop: &String) -> Result<BusStop, String> {
         let url: Url = match Url::parse(
             &*format!(
                 "{}?key={}&searchstring={}",
@@ -111,7 +111,7 @@ impl BusStop {
 
 
 impl RealTidAPI {
-    pub async fn get(api_key: String, base_url: String, stop: BusStop) -> Option<RealTidAPI> {
+    pub async fn get(api_key: &String, base_url: &String, stop: &BusStop) -> Option<RealTidAPI> {
         let url: Url = match Url::parse(
             &*format!(
                 "{}?key={}&siteid={}&timewindow={}",

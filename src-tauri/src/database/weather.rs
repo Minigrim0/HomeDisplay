@@ -4,7 +4,7 @@ use crate::database::connection;
 use crate::models::weather::WeatherInfo;
 
 
-pub fn store_weather(weather: WeatherInfo) -> Result<WeatherInfo, String> {
+pub fn store_weather(weather: &WeatherInfo) -> Result<(), String> {
     // Save the weather in redis
     let mut con: redis::Connection = connection::get_redis_connection()?;
 
@@ -14,7 +14,7 @@ pub fn store_weather(weather: WeatherInfo) -> Result<WeatherInfo, String> {
     };
 
     match con.set::<String, String, redis::Value>("homedisplay:weather".to_string(), serialized_weather) {
-        Ok(_) => Ok(weather),
+        Ok(_) => Ok(()),
         Err(error) => Err(format!("Could not save serialized data into redis: {}", error))
     }
 }

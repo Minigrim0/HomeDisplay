@@ -10,7 +10,7 @@ pub struct APIResponse {
     pub rates: HashMap<String, f32>
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Conversion {
     pub from_currency: String,
     pub from_currency_amount: f32,

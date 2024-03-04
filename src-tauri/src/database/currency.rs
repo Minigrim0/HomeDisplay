@@ -4,7 +4,7 @@ use crate::database::connection;
 use crate::models::currency::Conversion;
 
 
-pub fn store_conversion(conversion: Conversion) -> Result<Conversion, String> {
+pub fn store_conversion(conversion: &Conversion) -> Result<(), String> {
     // Save the conversion in redis
     let mut con: redis::Connection = connection::get_redis_connection()?;
 
@@ -14,7 +14,7 @@ pub fn store_conversion(conversion: Conversion) -> Result<Conversion, String> {
     };
 
     match con.set::<String, String, redis::Value>("homedisplay:conversion".to_string(), serialized_conversion) {
-        Ok(_) => Ok(conversion),
+        Ok(_) => Ok(()),
         Err(error) => Err(format!("Could not save serialized data into redis: {}", error))
     }
 }

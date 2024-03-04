@@ -25,15 +25,15 @@ pub async fn get_departures() -> Result<Vec<models::transports::StopDepartures>,
 #[tauri::command]
 pub async fn fetch_apis(){
     match weather::fetch_weather().await {
-        Ok(weather) => match database::weather::store_weather(weather.clone()) {
+        Ok(weather) => match database::weather::store_weather(&weather) {
             Ok(_) => println!("{}", "Weather was successfully stored in the database".green()),
             Err(error) => println!("{}", format!("An error occured while saving the weather informations: {}", error).red())
         },
         Err(err) => println!("{}", format!("No weather information were saved: {}", err).red())
     }
-    
+
     match currency::fetch_conversion().await {
-        Ok(conversion) => match database::currency::store_conversion(conversion.clone()) {
+        Ok(conversion) => match database::currency::store_conversion(&conversion) {
             Ok(_) => println!("{}", "Conversion information where successfully stored in the database".green()),
             Err(error) => println!("{}", format!("An error occured while save the currency information in the database: {}", error).red())
         },
@@ -41,8 +41,8 @@ pub async fn fetch_apis(){
     }
 
     match transports::get_bus_stops().await {
-        Ok(bus_stops) => match database::transports::store_bus_stops(bus_stops.clone()) {
-            Ok(stops) => println!("{}", format!("Successfully saved {} new stop(s) in the database", stops.len()).green()),
+        Ok(bus_stops) => match database::transports::store_bus_stops(&bus_stops) {
+            Ok(()) => println!("{}", format!("Successfully saved {} new stop(s) in the database", bus_stops.len()).green()),
             Err(error) => println!("{}", format!("An error occured while saving stops information in the database: {}", error).red())
         },
         Err(error) => println!("{}", format!("No bus stop information were saved: {}", error).red())
