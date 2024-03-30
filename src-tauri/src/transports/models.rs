@@ -4,7 +4,6 @@ use serde_derive::{Deserialize, Serialize};
 use reqwest::Url;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "PascalCase")]
 pub struct BusStop {
     pub name: String,
     pub site_id: String,
@@ -13,7 +12,6 @@ pub struct BusStop {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "PascalCase")]
 pub struct PlatsUppSlagAPI {
     pub status_code: i32,
     pub message: Option<String>,
@@ -21,12 +19,6 @@ pub struct PlatsUppSlagAPI {
     pub response_data: Vec<BusStop>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "PascalCase")]
-pub struct PlatsUppSlagAPIError {
-    pub status_code: i32,
-    pub message: Option<String>,
-}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Deviation {
@@ -41,6 +33,7 @@ pub struct Line {
     pub transport_mode: String,
 }
 
+/// A departure (must be linked to a stop)
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Departure {
     pub destination: String,
@@ -48,12 +41,7 @@ pub struct Departure {
     pub line: Line,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct RealTidAPI {
-    pub departures: Vec<Departure>,
-    pub stop_deviations: Vec<Deviation>,
-}
-
+/// A stop with all its departures
 #[derive(Serialize, Deserialize, Debug)]
 pub struct StopDepartures {
     pub stop: BusStop,

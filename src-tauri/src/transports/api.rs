@@ -1,49 +1,11 @@
-extern crate redis;
-use std::env::var;
+use crate::transports::models::StopDepartures;
 
-use crate::models::transports::{BusStop, RealTidAPI, StopDepartures};
-use crate::database::connection;
-
-
-pub async fn check_bus_stop(stop_name: String) -> Result<BusStop, String> {
-    match connection::get_redis_key(format!("homedisplay:{}", stop_name)).await {
-        Ok(place_id) => match serde_json::from_str(&place_id) {
-            Ok(value) => Ok(value),
-            Err(error) => Err(format!("Could not deserialize busstop from redis: {}\nIs the data malformed ?", error))
-        },
-        Err(_) => Err("Could not find the bus stop in the database".to_string())
-    }
-}
-
-
-pub async fn get_bus_stops() -> Result<Vec<BusStop>, String> {
-    let root_url: String = match var("SL_TRANSPORTS_ROOT_URL") {
-        Ok(url) => url,
-        Err(_) => return Err("Missing Root URL for SL's transports, can't fetch site ids (export SL_TRANSPORTS_ROOT_URL)".to_string())
-    };
-
-    let bus_stops_str: String;
-    let bus_stops: Vec<&str> = match var("SL_PLACE_BUS_STOPS") {
-        Ok(stops) => {
-            bus_stops_str = stops;
-            bus_stops_str.split(",").collect::<Vec<&str>>()
-        },
-        Err(_) => return Err("Missing bus stops, can't define what to fetch (export SL_PLACE_BUS_STOPS)".to_string())
-    };
-
-    let mut bus_stops_array: Vec<BusStop> = vec![];
-    let stops: &mut Vec<BusStop> = &mut bus_stops_array;
-    for stop in bus_stops.iter() {
-        match check_bus_stop(stop.to_string()).await {
-            Ok(place_id) => stops.push(place_id),  // The bus stop is cached in redis
-            Err(_) => match BusStop::get(&root_url, &(*stop).to_string()).await {  // The bus stop is not in redis, fetch it from the API
-                Ok(bus_stop) => stops.push(bus_stop),
-                Err(_) => continue
-            }
-        }
-    };
-
-    Ok(bus_stops_array)
+/// Represents an answer from the Realtime API endpoint
+/// https://transport.integration.sl.se/v1/sites/{SiteId}/departures
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RealTidAPI {
+    pub departures: Vec<Departure>,
+    pub stop_deviations: Vec<Deviation>,
 }
 
 
