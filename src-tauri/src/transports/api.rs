@@ -1,6 +1,9 @@
+use colored::Colorize;
+use redis::Commands;
 use reqwest::Url;
 use serde_derive::{Deserialize, Serialize};
 use std::env::var;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::database;
 use crate::transports::models;
@@ -28,54 +31,81 @@ pub struct SiteListAPI {
     sites: Vec<SiteAPI>
 }
 
-impl SiteDepartureAPI {
-    /// Refreshes data by calling the API endpoint
-    /// The refreshed data is sent to the redis database
-    async fn refresh(&self) {
+impl models::Site {
+    // Saves the site in redis, updating timestamps
+    async fn save(&mut self) -> Result<(), String> {
+        let mut con: redis::Connection = database::get_redis_connection()?;
 
+        self.timestamp = SystemTime::now().duration_since(UNIX_EPOCH).expect("wtf time went backwards").as_secs();
+
+        let serialized_stop: String = match serde_json::to_string(&self) {
+            Ok(serialized) => serialized,
+            Err(err) => return Err(format!("An error occured while serializing the data: {}", err))
+        };
+
+        match con.set::<String, String, redis::Value>(format!("homedisplay:stops:{}", self.id), serialized_stop) {
+            Ok(_) => {
+                println!("{}", format!("Successfully saved stop {}", self.name).green());
+                Ok(())
+            },
+            Err(redis_err) => Err(format!("{}", format!("Could not save serialized stop ({}) into redis: {}", self.name, redis_err).red()))
+        }
     }
 
-    /// Check the freshness of the data in the redis database
-    /// If above a certain threshold, data is refreshed from the API and the new departures
-    /// Are returned and stored in the database
-    pub async fn get(base_url: &String, stop: &models::Site) -> Option<SiteDepartureAPI> {
+    /// Refreshes data by calling the API endpoint
+    /// The refreshed data is sent to the redis database
+    async fn refresh(&mut self) -> Result<(), String> {
+        let base_url = match var("SL_TRANSPORTS_ROOT_URL") {
+            Ok(b) => b,
+            Err(e) => return Err(e.to_string())
+        };
+
         let url: Url = match Url::parse(
-            &*format!("{}/sites/{}/departures", base_url, stop.site_id)
+            &*format!("{}/sites/{}/departures", base_url, self.id)
         ) {
             Ok(url) => url,
             Err(error) => {
-                println!("Could not parse realtid URL, {}", error);
-                return None
+                return Err(format!("Could not parse realtid URL, {}", error));
             }
         };
 
         let result = match reqwest::get(url).await {
             Ok(resp) => resp,
             Err(error) => {
-                println!("Unable to fetch realtid information: {}", error);
-                return None
+                return Err(format!("Unable to fetch realtid information: {}", error))
             }
         };
 
-        match result.status() {
+        let timings = match result.status() {
             reqwest::StatusCode::OK => {
                 match result.json::<SiteDepartureAPI>().await {
-                    Ok(timings) => Some(timings),
-                    Err(error) => {
-                        println!("Error while parsing SiteDepartureAPI: {}", error.to_string());
-                        None
-                    }
+                    Ok(timings) => timings,
+                    Err(error) => return Err(format!("Error while parsing SiteDepartureAPI: {}", error.to_string()))
                 }
             }
             reqwest::StatusCode::UNAUTHORIZED => {
-                println!("Got unauthorized response while fetching the Departures, check your API key");
-                None
+                return Err(format!("Got unauthorized response while fetching the Departures, check your API key"))
             },
             _ => {
-                println!("An error occured while fecthing departures !");
-                None
+                return Err(format!("An error occured while fecthing departures !"))
             }
+        };
+
+        self.departures = timings.departures;
+
+        Ok(())
+    }
+
+    /// Check the freshness of the data in the redis database
+    /// If above a certain threshold, data is refreshed from the
+    /// API and the new departures Are stored in the database
+    pub async fn get_departures(&mut self) -> Result<&Vec<models::Departure>, String> {
+        // Check freshness
+        if SystemTime::now().duration_since(UNIX_EPOCH).expect("wtf time went backwards").as_secs() - self.timestamp < 60 {  // Refresh every minute
+            self.refresh();
         }
+
+        Ok(&self.departures)
     }
 }
 

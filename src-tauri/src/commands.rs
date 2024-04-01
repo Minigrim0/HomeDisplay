@@ -19,7 +19,7 @@ pub async fn get_currency() -> Result<models::currency::Conversion, String> {
 
 #[tauri::command]
 pub async fn get_departures() -> Result<Vec<models::transports::StopDepartures>, String> {
-    database::transports::fetch_current_departures().await
+    transports::database::fetch_current_departures().await
 }
 
 #[tauri::command]
