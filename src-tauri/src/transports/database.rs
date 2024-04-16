@@ -1,47 +1,35 @@
-extern crate redis;
-use redis::Commands;
-use colored::Colorize;
-
+/// This file interacts with the database in order to load/store the sites
+/// It can also fetch the sites from the API if they are not in the database
 use crate::database;
-use crate::models::transports::{BusStop, StopDepartures};
-use crate::api::transports;
 
-pub fn store_bus_stops(bus_stops: &Vec<BusStop>) -> Result<(), String> {
-    // Save the weather in redis
-    let mut con: redis::Connection = database::get_redis_connection()?;
+use crate::transports::models::Site;
 
-    let mut error: i32 = 0;
-    for stop in bus_stops {
-        let serialized_stop: String = match serde_json::to_string(&stop) {
-            Ok(serialized) => serialized,
-            Err(err) => {
-                println!("An error occured while serializing the data: {}", err);
-                error += 1;
-                continue;
-            }
-        };
 
-        // TODO: Try to use the value in the env var as key instead of the real name
-        match con.set::<String, String, redis::Value>(format!("homedisplay:stops:{}", stop.name), serialized_stop) {
-            Ok(_) => println!("{}", format!("Successfully saved stop {}", stop.name).green()),
-            Err(redis_err) => {
-                println!("{}", format!("Could not save serialized stop ({}) into redis: {}", stop.name, redis_err).red());
-                error += 1;
-                continue;
-            }
-        };
+impl Site {
+    // Refreshes data in the database by calling the API
+    async fn db_refresh() -> Result<Vec<Site>, String> {
+
+        Err("TODO: Implement db_refresh()".to_string())
     }
 
-    if error > 0 {
-        Err(format!("{} error(s) occured while saving the bus stops", error))
-    } else {
-        Ok(())
-    }
-}
+    // Returns all the sites from the database
+    pub async fn db_get_all() -> Result<Vec<Site>, String> {
+        // Fetch all the sites from the database
+        // and save them in the database
+        let mut site_list: Vec<Site> = vec![];
 
-/**
- * This endpoint fetches Departures directly from the API as realtime is "needed"
- */
-pub async fn fetch_current_departures() -> Result<Vec<StopDepartures>, String> {
-    transports::get_all_departures().await
+        if let Ok(sites) = database::scan_iter("homedisplay:sites:*".to_string()).await {
+            for site in sites.iter() {
+                if let Ok(serialized_site) = database::get_redis_key(site.to_string()).await {
+                    if let Ok(site) = serde_json::from_str::<Site>(&serialized_site) {
+                        site_list.push(site);
+                    }
+                }
+            }
+            Ok(site_list)
+        } else {
+            // TODO: Try to fetch the sites from the API
+            Err("No sites".to_string())
+        }
+    }
 }

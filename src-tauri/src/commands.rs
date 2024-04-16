@@ -1,9 +1,11 @@
 use colored::Colorize;
 
-use crate::api::{weather, currency, transports};
+use crate::api::{weather, currency};
 
 use crate::models;
 use crate::database;
+
+use crate::transports;
 
 #[tauri::command]
 pub async fn get_weather() -> Result<models::weather::WeatherInfo, String> {
@@ -18,8 +20,8 @@ pub async fn get_currency() -> Result<models::currency::Conversion, String> {
 
 
 #[tauri::command]
-pub async fn get_departures() -> Result<Vec<models::transports::StopDepartures>, String> {
-    transports::database::fetch_current_departures().await
+pub async fn get_departures() -> Result<Vec<transports::models::Site>, String> {
+    transports::commands::fetch_current_departures().await
 }
 
 #[tauri::command]
@@ -40,8 +42,8 @@ pub async fn fetch_apis(){
         Err(error) => println!("{}", format!("No currency information were saved: {}", error).red())
     }
 
-    match transports::get_bus_stops().await {
-        Ok(bus_stops) => match database::transports::store_bus_stops(&bus_stops) {
+    match transports::api::SiteListAPI::get().await {
+        Ok(bus_stops) => match transports::commands::store_bus_stops(&bus_stops) {
             Ok(()) => println!("{}", format!("Successfully saved {} new stop(s) in the database", bus_stops.len()).green()),
             Err(error) => println!("{}", format!("An error occured while saving stops information in the database: {}", error).red())
         },
