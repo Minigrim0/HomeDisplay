@@ -32,6 +32,7 @@ pub fn store_conversion(conversion: &Conversion) -> Result<(), String> {
     }
 }
 
+/// Fetches the current conversion from the database, if it is older than a day, data will be refreshed before being returned
 pub async fn fetch_current_conversion() -> Result<Conversion, String> {
     match database::get_redis_key("homedisplay:conversion".to_string()).await {
         Ok(serialized) => match serde_json::from_str(serialized.as_str()) {
