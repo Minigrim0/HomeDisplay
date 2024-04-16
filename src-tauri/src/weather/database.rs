@@ -13,14 +13,19 @@ struct WeatherDatabase {
     freshness: u64
 }
 
+// Saves the weather in redis, wrapping it in a struct that includes the freshness of the data
 fn store_weather(weather: &WeatherInfo) -> Result<(), String> {
-    // Save the weather in redis
-    let mut con: redis::Connection = database::get_redis_connection()?;
+    let weather: WeatherDatabase = WeatherDatabase {
+        weather: weather.clone(),
+        freshness: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
+    };
 
     let serialized_weather: String = match serde_json::to_string(&weather) {
         Ok(serialized) => serialized,
-        Err(error) => format!("An error occured while serializing the data: {}", error)
+        Err(error) => return Err(format!("An error occured while serializing the data: {}", error))
     };
+
+    let mut con: redis::Connection = database::get_redis_connection()?;
 
     match con.set::<String, String, redis::Value>("homedisplay:weather".to_string(), serialized_weather) {
         Ok(_) => Ok(()),
