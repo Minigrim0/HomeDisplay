@@ -1,4 +1,4 @@
 mod api;
 mod database;
-mod models;
+pub mod models;
 pub mod commands;
