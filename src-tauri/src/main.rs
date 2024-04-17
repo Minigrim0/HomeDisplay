@@ -11,7 +11,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             crate::currency::commands::get_currency,
             crate::weather::commands::get_weather,
-            crate::transports::commands::get_site,
+            crate::transports::commands::get_sites,
+            crate::transports::commands::get_departures,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
