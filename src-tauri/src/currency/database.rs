@@ -13,7 +13,7 @@ struct ConversionDatabase {
 }
 
 /// Saves the conversion in redis, wrapping it in a struct that includes the freshness of the data
-pub fn store_conversion(conversion: &Conversion) -> Result<(), String> {
+fn store_conversion(conversion: &Conversion) -> Result<(), String> {
     let conversion: ConversionDatabase = ConversionDatabase {
         conversion: conversion.clone(),
         freshness: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
