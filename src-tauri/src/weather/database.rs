@@ -1,3 +1,4 @@
+use log::{info, warn};
 use redis::Commands;
 use serde::{Serialize, Deserialize};
 use serde_json;
@@ -51,8 +52,18 @@ pub async fn fetch_current_weather() -> Result<WeatherInfo, String> {
                     Ok(weather)
                 }
             },
-            Err(error) => return Err(format!("An error occured while deserializing the weather: {}", error.to_string()))
+            Err(error) => Err(format!("An error occured while deserializing the weather: {}", error.to_string()))
         },
-        Err(err) => Err(err)
+        Err(err) => {  // If the key does not exist, fetch the data from the API
+            warn!("Could not fetch weather from redis: {}", err);
+            info!("Fetching weather from the API");
+            match WeatherInfo::api_get().await {
+                Ok(weather) => {
+                    store_weather(&weather)?;
+                    Ok(weather)
+                },
+                Err(error) => Err(error)
+            }
+        }
     }
 }

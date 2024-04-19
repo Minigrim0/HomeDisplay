@@ -1,3 +1,4 @@
+use log::{info, warn};
 use redis::Commands;
 use serde::{Serialize, Deserialize};
 use serde_json;
@@ -54,6 +55,16 @@ pub async fn fetch_current_conversion() -> Result<Conversion, String> {
             },
             Err(error) => Err(format!("An error occured while deserializing the conversion: {}", error.to_string()))
         },
-        Err(err) => Err(err)
+        Err(err) => {
+            warn!("Could not fetch conversion from redis: {}", err);
+            info!("Fetching conversion from API");
+            match Conversion::api_get().await {
+                Ok(conversion) => {
+                    store_conversion(&conversion)?;
+                    Ok(conversion)
+                },
+                Err(error) => Err(error)
+            }
+        }
     }
 }
