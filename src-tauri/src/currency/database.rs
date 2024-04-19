@@ -1,4 +1,4 @@
-use log::{info, warn};
+use log::{error, info, warn};
 use redis::Commands;
 use serde::{Serialize, Deserialize};
 use serde_json;
@@ -39,8 +39,8 @@ pub async fn fetch_current_conversion() -> Result<Conversion, String> {
         Ok(serialized) => match serde_json::from_str(serialized.as_str()) {
             Ok(conversion) => {
                 let ConversionDatabase { conversion, freshness } = conversion;
-                // Check freshness of current data is less than a day
                 if SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - freshness > 86400 {
+                    info!("Data is older than a day, fetching new data from API");
                     match Conversion::api_get().await {
                         Ok(conversion) => {
                             store_conversion(&conversion)?;
@@ -49,21 +49,29 @@ pub async fn fetch_current_conversion() -> Result<Conversion, String> {
                         Err(error) => Err(error)
                     }
                 } else {
+                    info!("Data is fresh, returning data from database");
                     Ok(conversion)
                 }
 
             },
-            Err(error) => Err(format!("An error occured while deserializing the conversion: {}", error.to_string()))
+            Err(error) => {
+                error!("Could not deserialize the conversion: {}", error);
+                Err(format!("An error occured while deserializing the conversion: {}", error.to_string()))
+            }
         },
         Err(err) => {
             warn!("Could not fetch conversion from redis: {}", err);
             info!("Fetching conversion from API");
             match Conversion::api_get().await {
                 Ok(conversion) => {
+                    info!("Storing conversion in database");
                     store_conversion(&conversion)?;
                     Ok(conversion)
                 },
-                Err(error) => Err(error)
+                Err(error) =>{
+                    error!("Could not fetch conversion from API: {}", error);
+                    Err(error)
+                }
             }
         }
     }
