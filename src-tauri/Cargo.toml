@@ -1,6 +1,6 @@
 [package]
 name = "home-display"
-version = "0.1.0"
+version = "1.0.0"
 description = "A home display for nearby bus stops, weather information and currency exchange rates"
 authors = ["Minigrim0"]
 license = ""
@@ -19,6 +19,9 @@ serde_derive = "1.0.180"
 reqwest = { version = "0.11.18", features = ["json"] }
 tokio = { version = "1.29.1", features = ["full"] }
 redis = "0.23.1"
+log = "0.4.21"
+unidecode = "0.3.0"
+env_logger = "0.11.3"
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]  # DO NOT REMOVE!!

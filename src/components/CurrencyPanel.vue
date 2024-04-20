@@ -84,19 +84,13 @@ export default {
     },
     mounted(){
         this.load_currency_data();
-        setInterval(() => {
-            this.load_currency_data();
-        }, 3600000);
+        setInterval(() => this.load_currency_data(), 3600000);
 
         this.update_current_time();
         this.update_current_date();
 
-        this.clock_interval = setInterval(() => {
-            this.update_current_time();
-        }, 1000);
-        this.current_date_interval = setInterval(() => {
-            this.update_current_date();
-        }, 3600000);
+        this.clock_interval = setInterval(() => this.update_current_time(), 1000);
+        this.current_date_interval = setInterval(() => this.update_current_date(), 3600000);
     }
 }
 </script>

@@ -1,7 +1,9 @@
 <template>
-    <h3>{{  transport_type }}</h3>
-    <div v-for="transport in departures" :key="transport.DisplayTime">
-        {{ transport.LineNumber }} - {{ transport.Destination }} - {{ transport.DisplayTime }}
+    <div v-for="mode in transport_modes" :key="mode">
+        <h4>{{  mode }}</h4>
+        <div v-for="departure in departures.filter(dep => dep.line.transport_mode == mode)" :key="`${departure.line.id}-${departure.display}`">
+            {{ departure.line.id }} - {{ departure.destination }} - {{ departure.display }}
+        </div>
     </div>
 </template>
 
@@ -13,9 +15,16 @@ export default {
             type: Array,
             required: true
         },
-        transport_type: {
-            type: String,
-            default: () => "unknown"
+    },
+    computed: {
+        transport_modes() {
+            let modes = [];
+            for (let departure of this.departures) {
+                if (!modes.includes(departure.line.transport_mode)) {
+                    modes.push(departure.line.transport_mode);
+                }
+            }
+            return modes;
         }
     }
 }
