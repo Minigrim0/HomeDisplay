@@ -49,7 +49,7 @@ pub async fn fetch_current_conversion() -> Result<Conversion, String> {
                         Err(error) => Err(error)
                     }
                 } else {
-                    info!("Data is fresh, returning data from database");
+                    info!("Data is fresh enough, returning data from redis");
                     Ok(conversion)
                 }
 

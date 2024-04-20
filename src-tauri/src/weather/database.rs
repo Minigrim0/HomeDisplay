@@ -41,6 +41,7 @@ pub async fn fetch_current_weather() -> Result<WeatherInfo, String> {
                 let WeatherDatabase { weather, freshness } = conversion;
                 // Check freshness of current data is less than an hour
                 if SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - freshness > 3600 {
+                    info!("Data is older than an hour, fetching new data from API");
                     match WeatherInfo::api_get().await {
                         Ok(weather) => {
                             store_weather(&weather)?;
@@ -49,6 +50,7 @@ pub async fn fetch_current_weather() -> Result<WeatherInfo, String> {
                         Err(error) => Err(error)
                     }
                 } else {
+                    info!("Data is fresh enough, returning data from redis");
                     Ok(weather)
                 }
             },

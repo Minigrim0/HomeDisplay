@@ -1,4 +1,5 @@
 extern crate redis;
+use log::info;
 use redis::Commands;
 
 
@@ -20,14 +21,15 @@ pub fn get_redis_connection() -> Result<redis::Connection, String> {
 }
 
 pub async fn get_redis_key(key: String) -> Result<String, String> {
+    info!("Fetching data from redis with key: {}", key);
     let mut connection = get_redis_connection()?;
 
     match connection.get::<String, Option<String>>(key) {
         Err(error) => {
-            Err(format!("An error occured while fetching the conversion from redis: {}", error.to_string()))
+            Err(format!("An error occured while fetching the data from redis: {}", error.to_string()))
         },
         Ok(None) => {
-            Err("No conversion stored in the database".to_string())
+            Err("No data stored in the database".to_string())
         },
         Ok(Some(serialized)) => {
             Ok(serialized)
