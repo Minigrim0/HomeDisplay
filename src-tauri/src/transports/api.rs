@@ -1,4 +1,5 @@
 use reqwest::Url;
+use reqwest::header::CONTENT_TYPE;
 use serde_derive::{Deserialize, Serialize};
 
 use super::models::{Coordinates, Departure, Site};
@@ -8,8 +9,12 @@ use super::models::{Coordinates, Departure, Site};
 struct SiteAPI {
     pub id: i32,  // Site id, used to get Realtime departures
     pub name: String,  // The name of the stop
-    pub lat: f32,
-    pub lon: f32,
+
+    // Sometimes there is no lat/lon, so we default to 0.0
+    #[serde(default)]
+    pub lat: Option<f32>,
+    #[serde(default)]
+    pub lon: Option<f32>,
 }
 
 
@@ -21,7 +26,8 @@ impl Site {
             Err(err) => return Err(format!("Could not parse URL: {}", err))
         };
 
-        let result = match reqwest::get(url).await {
+        let client = reqwest::Client::new();
+        let result = match client.get(url).header(CONTENT_TYPE, "application/json").send().await {
             Ok(resp) => resp,
             Err(err) => return Err(format!("Unable to fetch bus Sites, Err: {}", err))
         };
@@ -39,15 +45,14 @@ impl Site {
                         name: site.name,
                         id: site.id.to_string(),
                         coord: Coordinates {
-                            latitude: site.lat,
-                            longitude: site.lon
+                            latitude: site.lat.unwrap_or(0.0),
+                            longitude: site.lon.unwrap_or(0.0)
                         }
                     }).collect()),
                     Err(e) => Err(format!("Error while fetching bus sites: {}", e.to_string())),
                 }
             },
-            reqwest::StatusCode::UNAUTHORIZED => Err(format!("Unauthorized to fetch bus Sites, check the API key")),
-            _ => Err(format!("Uh oh! Something unexpected happened while fetching bus Sites")),
+            status => Err(format!("Uh oh! Something unexpected happened while fetching bus sites: {status}")),
         }
     }
 }
@@ -59,13 +64,14 @@ struct DepartureAPI {
 }
 
 impl Departure {
-    pub async fn api_get(site: Site) -> Result<Vec<Departure>, String> {
+    pub async fn api_get(site: &Site) -> Result<Vec<Departure>, String> {
         let url: Url = match Url::parse(format!("https://transport.integration.sl.se/v1/sites/{}/departures", site.id).as_str()) {
             Ok(url) => url,
             Err(err) => return Err(format!("Could not parse URL: {}", err))
         };
 
-        let result = match reqwest::get(url).await {
+        let client = reqwest::Client::new();
+        let result = match client.get(url).header(CONTENT_TYPE, "application/json").send().await {
             Ok(resp) => resp,
             Err(err) => return Err(format!("Unable to fetch bus Sites, Err: {}", err))
         };
@@ -83,7 +89,7 @@ impl Departure {
                     Err(e) => Err(format!("Error while fetching departures: {}", e.to_string())),
                 }
             },
-            status => Err(format!("Uh oh! Something unexpected happened while fetching bus Sites: {status}")),
+            status => Err(format!("Uh oh! Something unexpected happened while fetching departures: {status}")),
         }
     }
 }
