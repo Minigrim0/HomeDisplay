@@ -2,8 +2,10 @@ use reqwest::Url;
 use serde_derive::Deserialize;
 use std::collections::HashMap;
 use std::env::var;
+use async_trait::async_trait;
 
-use super::models::Conversion;
+use crate::traits::Api;
+use common::models::currency::Conversion;
 
 #[derive(Deserialize, Debug)]
 /// An API response from Open Exchange Rates
@@ -12,8 +14,11 @@ struct APIResponse {
     pub rates: HashMap<String, f32>
 }
 
+trait ConversionFromAPI {
+    fn from_base(api_response: APIResponse, from_currency: String, to_currency: String) -> Conversion;
+}
 
-impl Conversion {
+impl ConversionFromAPI for Conversion {
     /// Convert an API response from Open Exchange Rates to a Conversion structure.
     fn from_base(data: APIResponse, from_currency: String, to_currency: String) -> Conversion {
         let from: f32 = match data.rates.get(&from_currency) {
@@ -34,12 +39,15 @@ impl Conversion {
             timestamp: data.timestamp
         }
     }
+}
 
+#[async_trait]
+impl Api<Conversion> for Conversion {
     /// Create a conversion structure based on the API response of Open Exchange Rates.
     /// `To` and `From` currencies are taken from the environment variables `OER_FROM` and `OER_TO`.
     /// If these variables are not set, the default values are `EUR` and `SEK`.
     /// The Open Exchange Rates API key is taken from the environment variable as well.
-    pub async fn api_get() -> Result<Conversion, String> {
+    async fn api_get() -> Result<Conversion, String> {
         let api_key: String = match var("OER_API_KEY") {
             Ok(key) => key,
             Err(_) => return Err("Missing API key for Open Exchange Rates (export OER_API_KEY)".to_string())

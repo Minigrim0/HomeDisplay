@@ -5,7 +5,8 @@ use serde_json;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::database;
-use super::models::WeatherInfo;
+use common::models::weather::WeatherInfo;
+use crate::traits::Api;
 
 
 #[derive(Serialize, Deserialize)]
