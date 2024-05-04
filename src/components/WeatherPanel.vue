@@ -70,7 +70,6 @@ export default {
     methods: {
         load_weather_data(){
             this.loading = true;
-            console.log("Fecthing weather data");
             invoke("get_weather")
                 .then(response => this.weather = response)
                 .catch(error => this.error = error)
@@ -91,12 +90,8 @@ export default {
     },
     mounted(){
         this.load_weather_data();
-        setInterval(() => {
-            this.upd_timer(this.dateDiffInDays(this.last_update, new Date()));
-        }, 1000);
-        setInterval(() => {
-            this.load_weather_data();
-        }, 1800000);
+        setInterval(() => this.upd_timer(this.dateDiffInDays(this.last_update, new Date())), 1000);
+        setInterval(() => this.load_weather_data(), 1800000);
     }
 }
 </script>

@@ -9,16 +9,14 @@
                 <div class="ball"></div>
             </div>
         </div>
-        <div v-else-if="error === null && departures !== {}">
-            <div v-for="departure_info in departures" :key="departure_info.stop.Name">
-                <h4>{{ departure_info.stop.Name }}</h4>
-                <TransportTimings :departures="departure_info.departures.Metros" transport_type="Metro" v-if="departure_info.departures.Metros.length > 0" />
-                <TransportTimings :departures="departure_info.departures.Buses" transport_type="Bus" v-if="departure_info.departures.Buses.length > 0" />
-                <TransportTimings :departures="departure_info.departures.Ships" transport_type="Ship" v-if="departure_info.departures.Ships.length > 0" />
-                <TransportTimings :departures="departure_info.departures.Trams" transport_type="Tram" v-if="departure_info.departures.Trams.length > 0" />
-                <TransportTimings :departures="departure_info.departures.Trains" transport_type="Train" v-if="departure_info.departures.Trains.length > 0" />
-                <div v-if="no_timings(departure_info)" style="color: red">
-                    No timings could be fetched 😥
+        <div v-else-if="error === null">
+            <div v-for="site in sites" :key="site.name">
+                <h3>{{ site.name }}</h3>
+                <div v-if="site_errors[site.id] !== undefined" style="color: red">
+                    {{ site_errors[site.id] }}
+                </div>
+                <div v-else>
+                    <TransportTimings :departures="departures[site.id]" v-if="departures[site.id].length > 0" />
                 </div>
             </div>
             <small>{{ time_since_last_update }} seconds ago. <span v-if="refreshing">refreshing...</span></small>
@@ -41,7 +39,9 @@ export default {
     },
     data() {
         return {
+            sites: [],
             departures: {},
+            site_errors: {},
             last_update: new Date(),
             time_since_last_update: 0,
             loading: true,
@@ -50,36 +50,37 @@ export default {
         };
     },
     methods: {
-        fetch_departures() {
-            invoke("get_departures")
+        fetch_sites() {
+            this.loading = true;
+            return invoke("get_sites")
                 .then(response => {
-                    this.departures = response;
-                    this.last_update = new Date();
+                    this.sites = response;
                 })
                 .catch(error => {
                     this.error = error;
-                })
-                .finally(() => {
-                    this.loading = false;
-                    this.refreshing = false;
                 });
+        },
+        async fetch_departures() {
+            for(let site of this.sites) {
+                this.departures[site.id] = {};
+                await invoke("get_departures", { site: site })
+                    .then(response => {
+                        this.departures[site.id] = response;
+                    })
+                    .catch(error => {
+                        this.site_errors[site.id] = error;
+                    });
+            }
+            if (this.sites.length === 0 && this.error === null) {
+                this.error = "No sites where found. Please use environment variables to set the sites.";
+            }
+            this.refreshing = false;
+            this.last_update = new Date();
+            this.loading = false;
         },
         refresh() {
             this.refreshing = true;
-            this.fetch_departures();
-        },
-        no_timings(departure_info) {
-            return (
-                departure_info.departures.Metros.length === 0
-             ) && (
-                departure_info.departures.Trams.length === 0
-              ) && (
-                departure_info.departures.Buses.length === 0
-              ) && (
-                departure_info.departures.Trains.length === 0
-              ) && (
-                departure_info.departures.Ships.length === 0
-              );
+            this.fetch_sites().then(() => this.fetch_departures());
         },
         dateDiffInDays(a, b) {
             return b - a;
@@ -90,7 +91,7 @@ export default {
         },
     },
     mounted() {
-        this.fetch_departures();
+        this.fetch_sites().then(() => this.fetch_departures());
         this.upd_timer(this.dateDiffInDays(this.last_update, new Date()));
         setInterval(this.refresh, 60000);  // Refresh the data every minute
     }

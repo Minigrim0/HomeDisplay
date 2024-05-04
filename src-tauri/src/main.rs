@@ -7,6 +7,7 @@ pub mod weather;
 pub mod transports;
 
 fn main() {
+    env_logger::init();
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             crate::currency::commands::get_currency,

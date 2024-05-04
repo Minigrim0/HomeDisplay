@@ -18,8 +18,15 @@ pub struct Site {
 
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Line {
+    pub id: i32,
+    pub transport_mode: String,
+}
+
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Departure {
     pub destination: String,
     pub display: String,
-    pub line: i32,
+    pub line: Line,
 }

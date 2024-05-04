@@ -23,6 +23,8 @@ struct DepartureDatabase {
     freshness: u64
 }
 
+/// Stores the site in the database, wrapped in a SiteDatabase struct to store the freshness
+/// of the data
 fn store_site(site: &Site) -> Result<(), String> {
     let site: SiteDatabase = SiteDatabase {
         site: site.clone(),
@@ -42,8 +44,52 @@ fn store_site(site: &Site) -> Result<(), String> {
     }
 }
 
-fn store_departures(site: &Site) -> Result<(), String> {
-    Ok(())
+/// Stores the departures of a site in the database, wrapped in a DepartureDatabase struct
+/// to store the freshness of the data
+fn store_departures(new_departures: &Vec<Departure>, site: &Site) -> Result<(), String> {
+    let departures = DepartureDatabase {
+        departures: new_departures.clone(),
+        freshness: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
+    };
+
+    let serialized_departures: String = match serde_json::to_string(&departures) {
+        Ok(serialized) => serialized,
+        Err(error) => return Err(format!("An error occured while serializing the data: {}", error))
+    };
+
+    let mut con: redis::Connection = database::get_redis_connection()?;
+
+    match con.set::<String, String, redis::Value>(format!("homedisplay:sites:{}:departures", site.id), serialized_departures) {
+        Ok(_) => Ok(()),
+        Err(error) => Err(format!("Could not save serialized data into redis: {}", error))
+    }
+}
+
+/// Fetches the sites from the API, filters them using the `SL_PLACE_BUS_STOPS` environment variable
+/// and stores them in the database
+pub async fn fetch_new_sites() -> Result<Vec<Site>, String> {
+    // Fecth site names from env
+    let name = env::var("SL_PLACE_BUS_STOPS").unwrap_or("".to_string());
+    let name: Vec<&str> = name.split(",").collect();
+    println!("Filtering on {:?}", name);
+
+    // Fetch sites from the API
+    let sites = Site::api_get().await?;
+    let mut filtered_sites: Vec<Site> = vec![];
+    info!("Fetched {} sites from the API", sites.len());
+    for site in sites.iter() {
+        if name.is_empty() || name.iter().any(|&n| unidecode(&site.name.to_lowercase()).contains(&unidecode(&n.to_lowercase()))) {
+            filtered_sites.push(site.clone());
+        }
+    }
+    info!("Filtered {} sites", filtered_sites.len());
+
+    for site in filtered_sites.iter() {
+        store_site(site)?;
+    }
+
+    // Store the sites in the database
+    Ok(filtered_sites)
 }
 
 /// Returns the sites from the database. The list is filtered using elements in the
@@ -53,6 +99,7 @@ pub async fn get_sites() -> Result<Vec<Site>, String> {
     let name: String = env::var("SL_PLACE_BUS_STOPS").unwrap_or("".to_string());
     let mut site_list: Vec<Site> = vec![];
 
+    info!("Scanning for sites in the database");
     match database::scan_iter("homedisplay:sites:*".to_string()).await {
         Ok(sites) => {
             for site in sites.iter() {
@@ -95,6 +142,13 @@ pub async fn get_sites() -> Result<Vec<Site>, String> {
                     warn!("Could not fetch site from redis");
                 }
             }
+            if site_list.is_empty() {
+                site_list = fetch_new_sites().await?;
+
+                if site_list.is_empty() {
+                    warn!("No sites found in the database, empty list will be returned");
+                }
+            }
             Ok(site_list)
         },
         Err(e) => Err(e)
@@ -103,6 +157,44 @@ pub async fn get_sites() -> Result<Vec<Site>, String> {
 
 /// Fetches the current departures from the database, if it is older than a minute,
 /// data will be refreshed before being returned
-pub async fn get_departures() -> Result<Vec<Departure>, String> {
-    Err("Not implemented yet".to_string())
+pub async fn get_departures(site: Site) -> Result<Vec<Departure>, String> {
+    match database::get_redis_key(format!("homedisplay:sites:{}:departures", site.id)).await {
+        Ok(serialized_departures) => {
+            let departures = match serde_json::from_str::<DepartureDatabase>(&serialized_departures) {
+                Ok(departures) if SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - departures.freshness > 60 => {
+                    info!("Departures for site {} are older than 60 seconds, fetching new data", site.id);
+                    match Departure::api_get(&site).await {
+                        Ok(new_departures) => {
+                            store_departures(&new_departures, &site)?;
+                            new_departures
+                        },
+                        Err(e) => {
+                            warn!("Error while fetching departures: {}", e.to_string());
+                            return Err(e);
+                        }
+                    }
+                },
+                Ok(departures) => departures.departures,
+                Err(e) => {
+                    warn!("Error while deserializing departures: {}", e.to_string());
+                    return Err(e.to_string());
+                }
+            };
+            Ok(departures)
+        },
+        Err(e) => {
+            warn!("Could not fetch departures from redis: {}", e);
+            info!("Fetching new departures from API for site {}", site.id);
+            match Departure::api_get(&site).await {
+                Ok(new_departures) => {
+                    store_departures(&new_departures, &site)?;
+                    Ok(new_departures)
+                },
+                Err(e) => {
+                    warn!("Error while fetching departures: {}", e.to_string());
+                    Err(e)
+                }
+            }
+        }
+    }
 }
