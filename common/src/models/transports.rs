@@ -1,6 +1,7 @@
 /// Simple models for the data we are going to use in the app
 /// These models represent the data that is sent to the frontend
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
+
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Coordinates {
