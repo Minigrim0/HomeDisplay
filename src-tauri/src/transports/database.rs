@@ -47,7 +47,7 @@ fn store_site(site: &Site) -> Result<(), String> {
 
 /// Stores the departures of a site in the database, wrapped in a DepartureDatabase struct
 /// to store the freshness of the data
-fn store_departures(new_departures: &Vec<Departure>, site: &Site) -> Result<(), String> {
+fn store_departures(new_departures: &Vec<Departure>, site_id: &str) -> Result<(), String> {
     let departures = DepartureDatabase {
         departures: new_departures.clone(),
         freshness: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
@@ -60,7 +60,7 @@ fn store_departures(new_departures: &Vec<Departure>, site: &Site) -> Result<(), 
 
     let mut con: redis::Connection = database::get_redis_connection()?;
 
-    match con.set::<String, String, redis::Value>(format!("homedisplay:sites:{}:departures", site.id), serialized_departures) {
+    match con.set::<String, String, redis::Value>(format!("homedisplay:sites:{}:departures", site_id), serialized_departures) {
         Ok(_) => Ok(()),
         Err(error) => Err(format!("Could not save serialized data into redis: {}", error))
     }
@@ -158,15 +158,15 @@ pub async fn get_sites() -> Result<Vec<Site>, String> {
 
 /// Fetches the current departures from the database, if it is older than a minute,
 /// data will be refreshed before being returned
-pub async fn get_departures(site: Site) -> Result<Vec<Departure>, String> {
-    match database::get_redis_key(format!("homedisplay:sites:{}:departures", site.id)).await {
+pub async fn get_departures(site_id: String) -> Result<Vec<Departure>, String> {
+    match database::get_redis_key(format!("homedisplay:sites:{}:departures", site_id)).await {
         Ok(serialized_departures) => {
             let departures = match serde_json::from_str::<DepartureDatabase>(&serialized_departures) {
                 Ok(departures) if SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - departures.freshness > 60 => {
-                    info!("Departures for site {} are older than 60 seconds, fetching new data", site.id);
-                    match Departure::api_get(&site).await {
+                    info!("Departures for site {} are older than 60 seconds, fetching new data", site_id);
+                    match Departure::api_get(site_id.clone()).await {
                         Ok(new_departures) => {
-                            store_departures(&new_departures, &site)?;
+                            store_departures(&new_departures, &site_id)?;
                             new_departures
                         },
                         Err(e) => {
@@ -185,10 +185,10 @@ pub async fn get_departures(site: Site) -> Result<Vec<Departure>, String> {
         },
         Err(e) => {
             warn!("Could not fetch departures from redis: {}", e);
-            info!("Fetching new departures from API for site {}", site.id);
-            match Departure::api_get(&site).await {
+            info!("Fetching new departures from API for site {}", site_id);
+            match Departure::api_get(site_id.clone()).await {
                 Ok(new_departures) => {
-                    store_departures(&new_departures, &site)?;
+                    store_departures(&new_departures, &site_id)?;
                     Ok(new_departures)
                 },
                 Err(e) => {
