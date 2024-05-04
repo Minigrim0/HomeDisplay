@@ -8,7 +8,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use unidecode::unidecode;
 
 use crate::database;
-use crate::transports::models::{Site, Departure};
+use crate::traits::{Api, Api1Param};
+use common::models::transports::{Site, Departure};
 
 
 #[derive(Serialize, Deserialize)]

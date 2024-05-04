@@ -1,8 +1,10 @@
 use reqwest::Url;
 use reqwest::header::CONTENT_TYPE;
 use serde_derive::{Deserialize, Serialize};
+use async_trait::async_trait;
 
-use super::models::{Coordinates, Departure, Site};
+use crate::traits::{Api, Api1Param};
+use common::models::transports::{Coordinates, Departure, Site};
 
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -18,9 +20,10 @@ struct SiteAPI {
 }
 
 
-impl Site {
+#[async_trait]
+impl Api<Vec<Site>> for Site {
     /// Returns the list of all sites from the API
-    pub async fn api_get() -> Result<Vec<Site>, String> {
+    async fn api_get() -> Result<Vec<Site>, String> {
         let url: Url = match Url::parse("https://transport.integration.sl.se/v1/sites") {
             Ok(url) => url,
             Err(err) => return Err(format!("Could not parse URL: {}", err))
@@ -63,9 +66,11 @@ struct DepartureAPI {
     pub departures: Vec<Departure>
 }
 
-impl Departure {
-    pub async fn api_get(site: &Site) -> Result<Vec<Departure>, String> {
-        let url: Url = match Url::parse(format!("https://transport.integration.sl.se/v1/sites/{}/departures", site.id).as_str()) {
+
+#[async_trait]
+impl Api1Param<String, Vec<Departure>> for Departure {
+    async fn api_get(site_id: String) -> Result<Vec<Departure>, String> {
+        let url: Url = match Url::parse(format!("https://transport.integration.sl.se/v1/sites/{}/departures", site_id).as_str()) {
             Ok(url) => url,
             Err(err) => return Err(format!("Could not parse URL: {}", err))
         };

@@ -1,7 +1,8 @@
 use log::info;
 
 use super::database;
-use super::models::WeatherInfo;
+use common::models::weather::WeatherInfo;
+
 
 #[tauri::command]
 pub async fn get_weather() -> Result<WeatherInfo, String> {

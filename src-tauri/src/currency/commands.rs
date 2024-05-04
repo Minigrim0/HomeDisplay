@@ -1,7 +1,7 @@
 use log::info;
 
 use super::database;
-use super::models::Conversion;
+use common::models::currency::Conversion;
 
 
 #[tauri::command]

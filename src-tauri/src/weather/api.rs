@@ -1,19 +1,23 @@
 /// Implements the logic for fetching weather data from the OpenWeatherMap API
 use reqwest::Url;
 use std::env::var;
+use async_trait::async_trait;
 
-use super::models::WeatherInfo;
+use crate::traits::Api;
 
-impl WeatherInfo {
-    pub async fn api_get() -> Result<WeatherInfo, String> {
+use common::models::weather::WeatherInfo;
+
+#[async_trait]
+impl Api<WeatherInfo> for WeatherInfo {
+    async fn api_get() -> Result<WeatherInfo, String> {
         let default_lat = 59.0;
         let default_lon = 17.0;
-    
+
         let api_key = match var("OWM_API_KEY") {
             Ok(k) => k,
             Err(_) => return Err("OWM_API_KEY is required to run this application".to_string())
         };
-    
+
         let latitude: f64 = match var("OWM_LAT") {
             Ok(str_lat) => match str_lat.parse::<f64>() {
                 Ok(latitude) => latitude,

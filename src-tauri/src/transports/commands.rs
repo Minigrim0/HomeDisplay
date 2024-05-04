@@ -1,5 +1,5 @@
 use super::database;
-use super::models::{Site, Departure};
+use common::models::transports::{Site, Departure};
 
 #[tauri::command]
 /// Returns the sites from the database. The list is filtered using elements in the
