@@ -4,7 +4,7 @@
     "beforeBuildCommand": "cd frontend && trunk build",
     "devPath": "http://localhost:8080",
     "distDir": "../frontend/dist",
-    "withGlobalTauri": false
+    "withGlobalTauri": true
   },
   "package": {
     "productName": "home-display",
