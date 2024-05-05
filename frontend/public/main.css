@@ -124,3 +124,15 @@ body {
         transform: rotate(360deg);
     }
 }
+
+.top-text {
+    font-size: 2.5em;
+    margin: 0;
+    width: 100%;
+}
+
+.bot-text {
+    font-size: 1.9em;
+    margin: 0;
+    width: 100%;
+}
