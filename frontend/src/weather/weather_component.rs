@@ -1,6 +1,5 @@
 use yew::{html, Component, Context, Html};
-use chrono::prelude::{DateTime, Timelike};
-use std::time::{SystemTime, UNIX_EPOCH};
+use chrono::prelude::{Local, DateTime, Timelike};
 
 
 use common::models::weather::WeatherInfo;
@@ -11,8 +10,8 @@ pub struct WeatherComponent {
     weather: Option<WeatherInfo>,
     loading: bool,
     error: Option<String>,
-    last_update: u64,
-    time_since_last_update: u64
+    last_update: i64,
+    time_since_last_update: i64
 }
 
 pub enum Msg {
@@ -36,7 +35,7 @@ impl Component for WeatherComponent {
             weather: None,
             loading: false,
             error: None,
-            last_update: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            last_update: Local::now().timestamp(),
             time_since_last_update: 0
         }
     }
@@ -44,7 +43,7 @@ impl Component for WeatherComponent {
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::ClockUpdate => {
-                let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+                let now = Local::now().timestamp();
                 self.time_since_last_update = now - self.last_update;
                 true
             }
@@ -52,12 +51,20 @@ impl Component for WeatherComponent {
                 self.loading = true;
                 self.error = None;
                 self.weather = None;
-                self.last_update = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+                self.last_update = Local::now().timestamp(); 
                 true
             },
             Msg::WeatherDataReceived(result) => {
+                match result {
+                    Ok(value) => {
+                        self.error = None;
+                        self.weather = Some(value);
+                    },
+                    Err(e) => {
+                        self.error = Some(e);
+                    }
+                }
                 self.loading = false;
-                self.weather = result.ok();
                 true
             }
         }
