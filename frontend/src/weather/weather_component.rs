@@ -1,6 +1,7 @@
-use yew::{html, AttrValue, Component, Context, Html};
-use chrono::prelude::*;
+use yew::{html, Component, Context, Html};
+use chrono::prelude::{DateTime, Timelike};
 use std::time::{SystemTime, UNIX_EPOCH};
+
 
 use common::models::weather::WeatherInfo;
 
@@ -28,7 +29,7 @@ impl Component for WeatherComponent {
     fn create(ctx: &Context<Self>) -> Self {
         ctx.link().send_message(Msg::LoadWeatherData);
 
-        let weather_ready_cb = ctx.link().callback(|e: | Msg::WeatherDataReceived(e.from_string()));
+        let weather_ready_cb = ctx.link().callback(Msg::WeatherDataReceived);
         start_weather_job(weather_ready_cb);
 
         Self {
@@ -54,14 +55,9 @@ impl Component for WeatherComponent {
                 self.last_update = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
                 true
             },
-            Msg::WeatherDataReceived(Ok(weather)) => {
+            Msg::WeatherDataReceived(result) => {
                 self.loading = false;
-                self.weather = Some(weather);
-                true
-            },
-            Msg::WeatherDataReceived(Err(error)) => {
-                self.loading = false;
-                self.error = Some(error);
+                self.weather = result.ok();
                 true
             }
         }
