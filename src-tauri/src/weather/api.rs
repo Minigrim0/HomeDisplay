@@ -1,6 +1,7 @@
 /// Implements the logic for fetching weather data from the OpenWeatherMap API
 use reqwest::Url;
 use std::env::var;
+use log::{info, warn};
 use async_trait::async_trait;
 
 use crate::traits::Api;
@@ -22,12 +23,12 @@ impl Api<WeatherInfo> for WeatherInfo {
             Ok(str_lat) => match str_lat.parse::<f64>() {
                 Ok(latitude) => latitude,
                 Err(error) => {
-                    println!("Could not convert latitude value to f64, using default (Err: {})", error.to_string());
+                    warn!("Could not convert latitude value to f64, using default (Err: {})", error.to_string());
                     default_lat
                 }
             },
             Err(_) => {
-                println!("Using default latitude value 59.0 (Err: Missing OWM_LAT)");
+                info!("Using default latitude value 59.0 (Err: Missing OWM_LAT)");
                 default_lat
             }
         };
@@ -36,12 +37,12 @@ impl Api<WeatherInfo> for WeatherInfo {
             Ok(str_lon) => match str_lon.parse::<f64>() {
                 Ok(longitude) => longitude,
                 Err(error) => {
-                    println!("Could not convert longitude value to f64, using default (Err: {})", error.to_string());
+                    warn!("Could not convert longitude value to f64, using default (Err: {})", error.to_string());
                     default_lon
                 }
             },
             Err(_) => {
-                println!("Using default latitude value 17.0 (Err: Missing OWM_LON)");
+                info!("Using default latitude value 17.0 (Err: Missing OWM_LON)");
                 default_lon
             }
         };
