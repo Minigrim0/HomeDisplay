@@ -1,4 +1,4 @@
-use chrono::{format, prelude::{DateTime, Local, Timelike}};
+use chrono::prelude::{DateTime, Local};
 use futures::StreamExt;
 use yew::{html, Html, Component, Context};
 
@@ -120,10 +120,10 @@ impl Component for CurrencyComponent {
             let to_currency = format!("{:.02} {}", conversion.to_currency_amount, conversion.to_currency);
             
             let refresh_date = {
-                let date_fetched = DateTime::from_timestamp(conversion.timestamp * 1000, 0).unwrap();
+                let date_fetched = DateTime::from_timestamp(conversion.timestamp, 0).unwrap().with_timezone(&Local);
                 let date = format!("{}", date_fetched.format("%d/%m/%Y"));
                 let time = format!("{}", date_fetched.format("%H:%M:%S"));
-                format!("last update {date} {time}");
+                format!("last update {date} {time}")
             };
 
             html! {
