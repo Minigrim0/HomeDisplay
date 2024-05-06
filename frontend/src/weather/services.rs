@@ -8,26 +8,28 @@ use yew::platform::time::{interval, sleep};
 use crate::glue::get_weather;
 
 const ONE_SEC: Duration = Duration::from_secs(1);
-const WEATHER_REFRESH_INTERVAL: Duration = Duration::from_secs(60);
+const WEATHER_REFRESH_INTERVAL: Duration = Duration::from_secs(60 * 30);
 
+pub fn refresh_weather(callback: Callback<Result<WeatherInfo, String>>) {
+    spawn_local( async move {
+        match get_weather().await {
+            Ok(response) => {
+                let weather: Result<WeatherInfo, String> = serde_wasm_bindgen::from_value(response).map_err(|e| e.to_string());
+                callback.emit(weather);
+            },
+            Err(e) => {
+                callback.emit(Err(serde_wasm_bindgen::from_value(e).unwrap()));
+            }
+        }
+    });
+}
 
 pub fn start_weather_job(callback: Callback<Result<WeatherInfo, String>>) {
     // Spawn a new task that will fetch the weather every 60 seconds
     spawn_local(async move {
         loop {
             // Fetch the weather
-            match get_weather().await {
-                Ok(response) => {
-                    // Convert this JsValue object to a WeatherInfo struct
-                    let weather: Result<WeatherInfo, String> = serde_wasm_bindgen::from_value(response).map_err(|e| e.to_string());
-                    // Emit it to the component
-                    callback.emit(weather);
-                },
-                Err(e) => {
-                    // Emit the error to the component
-                    callback.emit(Err(serde_wasm_bindgen::from_value(e).unwrap()));
-                }
-            }
+            refresh_weather(callback.clone());
 
             sleep(WEATHER_REFRESH_INTERVAL).await;
         }

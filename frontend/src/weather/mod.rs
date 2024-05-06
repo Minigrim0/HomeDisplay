@@ -1,2 +1,2 @@
 mod services;
-pub mod weather_component;
+pub mod component;
