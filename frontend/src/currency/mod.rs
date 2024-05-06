@@ -1,2 +1,2 @@
 mod services;
-pub mod currency_component;
+pub mod component;
