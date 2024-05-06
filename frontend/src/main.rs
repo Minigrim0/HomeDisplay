@@ -3,9 +3,12 @@ use yew::prelude::*;
 mod glue;
 mod weather;
 mod currency;
+mod transports;
 
-use weather::weather_component::WeatherComponent;
-use currency::currency_component::CurrencyComponent;
+use weather::component::WeatherComponent;
+use currency::component::CurrencyComponent;
+use transports::components::transport::TransportsComponent;
+
 
 fn main() {
     yew::Renderer::<App>::new().render();
@@ -18,6 +21,7 @@ pub fn app() -> Html {
         <div class="container">
             <WeatherComponent />
             <CurrencyComponent />
+            <TransportsComponent />
         </div>
     }
 }
