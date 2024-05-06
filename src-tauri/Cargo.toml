@@ -1,6 +1,6 @@
 [package]
 name = "home-display"
-version = "1.0.0"
+version = "0.3.0"
 description = "A home display for nearby bus stops, weather information and currency exchange rates"
 authors = ["Minigrim0"]
 license = ""
