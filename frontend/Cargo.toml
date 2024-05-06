@@ -17,3 +17,4 @@ serde = { version = "1.0", features = ["derive"] }
 chrono = "0.4.38"
 serde_json = "1.0.116"
 futures = "0.3.30"
+gloo-console = "0.3.0"

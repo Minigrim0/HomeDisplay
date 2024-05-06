@@ -14,7 +14,7 @@ export async function getSites() {
  * @returns {Promise<>}
  */
 export async function getDepartures(site) {
-    return await invoke("get_departures", {site: site});
+    return await invoke("get_departures", {siteId: site});
 }
 
 /**
