@@ -29,13 +29,9 @@ jobs:
             curl https://sh.rustup.rs -sSf | sh -s -- -y
             . "$HOME/.cargo/env"
             curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash
-            # Install framework specific packages
-            apt-get install -y nodejs
             # Install build tools and tauri-cli requirements
             apt-get install -y libwebkit2gtk-4.0-dev build-essential wget libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
             cargo install tauri-cli
-            # Install frontend dependencies
-            npm install
             # Build the application
             cargo tauri build --config '{"package": {"version": "${{ github.event.release.tag_name }}"}}'
 
