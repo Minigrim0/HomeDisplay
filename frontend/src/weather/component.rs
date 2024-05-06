@@ -1,10 +1,10 @@
 use yew::{html, Component, Context, Html};
 use chrono::prelude::{Local, DateTime, Timelike};
-
+use futures::StreamExt;
 
 use common::models::weather::WeatherInfo;
 
-use super::services::start_weather_job;
+use super::services::{start_weather_job, refresh_weather, stream_time};
 
 pub struct WeatherComponent {
     weather: Option<WeatherInfo>,
@@ -31,6 +31,9 @@ impl Component for WeatherComponent {
         let weather_ready_cb = ctx.link().callback(Msg::WeatherDataReceived);
         start_weather_job(weather_ready_cb);
 
+        let time_stream = stream_time();
+        ctx.link().send_stream(time_stream.map(|_| Msg::ClockUpdate));
+
         Self {
             weather: None,
             loading: false,
@@ -40,7 +43,7 @@ impl Component for WeatherComponent {
         }
     }
 
-    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::ClockUpdate => {
                 let now = Local::now().timestamp();
@@ -48,6 +51,7 @@ impl Component for WeatherComponent {
                 true
             }
             Msg::LoadWeatherData => {
+                refresh_weather(ctx.link().callback(Msg::WeatherDataReceived));
                 self.loading = true;
                 self.error = None;
                 self.weather = None;
@@ -71,27 +75,26 @@ impl Component for WeatherComponent {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
+        let panel_title = html! {
+            <h3 class="panel-title">
+                { "☀️ Weather ☀️" }
+                <button class="link-button" onclick={ctx.link().callback(|_| Msg::LoadWeatherData)}>
+                    { "🔁" }
+                </button>
+            </h3>
+        };
+        
         if let Some(error) = &self.error {
-            return html! {
+            html! {
                 <div class="panel panel-div">
-                    <h3 class="panel-title">
-                        { "☀️ Weather ☀️" }
-                        <button class="link-button" onclick={ctx.link().callback(|_| Msg::LoadWeatherData)}>
-                            { "🔁" }
-                        </button>
-                    </h3>
+                    { panel_title }
                     <p style="color: red">{{ error }}</p>
                 </div>
             }
         } else if self.loading {
-            return html! {
+            html! {
                 <div class="panel panel-div">
-                    <h3 class="panel-title">
-                        { "☀️ Weather ☀️" }
-                        <button class="link-button" onclick={ctx.link().callback(|_| Msg::LoadWeatherData)}>
-                            { "🔁" }
-                        </button>
-                    </h3>
+                    { panel_title }
                     <div v-if="loading" class="ring">
                         <div class="ball-holder">
                             <div class="ball"></div>
@@ -99,53 +102,37 @@ impl Component for WeatherComponent {
                     </div>
                 </div>
             }
-        }
-
-        if let Some(weather) = &self.weather {
+        } else if let Some(weather) = &self.weather {
             let temperature = format!("{:.0}°C", weather.main.temp);
-            let feel = format!("{:.0}°C", weather.main.feels_like);
+            let feel = format!("Feel {:.0}°C", weather.main.feels_like);
             let min = format!("⬇️ {:.0}°C", weather.main.temp_min);
             let max = format!("⬆️ {:.0}°C", weather.main.temp_max);
     
-            let weather_icon = format!("/img/owm/icons/{}@2x.png", weather.weather[0].icon);
+            let weather_icon = format!("/static/owm/icons/{}@2x.png", weather.weather[0].icon);
             let weather_description = &weather.weather[0].description;
 
             let sun_time = {
                 let sunrise = {
-                    let timestamp = weather.sys.sunrise * 1000;
-                    let sunrise = DateTime::from_timestamp(timestamp, 0);
-                    if let Some(time) = sunrise {
-                        format!("{:02}:{:02}", time.hour(), time.minute())
-                    } else {
-                        "N/A".to_string()
-                    }
+                    let timestamp = weather.sys.sunrise;
+                    let sunrise = DateTime::from_timestamp(timestamp, 0).unwrap().with_timezone(&Local);
+                    format!("{:02}:{:02}", sunrise.hour(), sunrise.minute())
                 };
                 let sunset = {
-                    let timestamp = weather.sys.sunset * 1000;
-                    let sunset = DateTime::from_timestamp(timestamp, 0);
-                    if let Some(time) = sunset {
-                        format!("{:02}:{:02}", time.hour(), time.minute())
-                    } else {
-                        "N/A".to_string()
-                    }
+                    let timestamp = weather.sys.sunset;
+                    let sunset = DateTime::from_timestamp(timestamp, 0).unwrap().with_timezone(&Local);
+                    format!("{:02}:{:02}", sunset.hour(), sunset.minute())
                 };
                 format!("🌅 {} 🌄 {}", sunrise, sunset)
             };
 
             let last_upd = {
-                let plural = if self.time_since_last_update > 1 { "s" } else { "" };
-                format!("{} minute{} ago", self.time_since_last_update, plural)
+                let plural = if (self.time_since_last_update / 60) > 1 { "s" } else { "" };
+                format!("{} minute{} ago", (self.time_since_last_update / 60) as i32, plural)
             };
 
             html! {
                 <div class="panel panel-div">
-                    <h3 class="panel-title">
-                        { "☀️ Weather ☀️" }
-                        <button class="link-button" onclick={ctx.link().callback(|_| Msg::LoadWeatherData)}>
-                            { "🔁" }
-                        </button>
-                    </h3>
-    
+                    { panel_title }
                     <h3 class="section-separator-title">{ "🌡️ Temperature 🌡️" }</h3>
                     <div>
                         <p class="central-content">{ temperature }</p>
@@ -177,12 +164,7 @@ impl Component for WeatherComponent {
         } else {
             html! {
                 <div class="panel panel-div">
-                    <h3 class="panel-title">
-                        { "☀️ Weather ☀️" }
-                        <button class="link-button" onclick={ctx.link().callback(|_| Msg::LoadWeatherData)}>
-                            { "🔁" }
-                        </button>
-                    </h3>
+                    { panel_title }
                     <p>{ "No weather data available" }</p>
                 </div>
             }
