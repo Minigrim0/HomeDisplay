@@ -1,6 +1,6 @@
 use chrono::prelude::{DateTime, Local};
 use futures::StreamExt;
-use yew::{html, Html, Component, Context};
+use yew::{html, Html, Component, Context, Properties};
 
 use super::services::{start_currency_job, stream_time, refresh_currency};
 use common::models::currency::Conversion;
@@ -19,10 +19,14 @@ pub enum Msg {
     CurrencyDataReceived(Result<Conversion, String>)
 }
 
+#[derive(Properties, PartialEq)]
+pub struct Props {
+    pub must_refresh: bool,
+}
 
 impl Component for CurrencyComponent {
     type Message = Msg;
-    type Properties = ();
+    type Properties = Props;
 
     fn create(ctx: &Context<Self>) -> Self {
         let currency_ready_cb = ctx.link().callback(Msg::CurrencyDataReceived);
@@ -40,6 +44,10 @@ impl Component for CurrencyComponent {
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+        if ctx.props().must_refresh {
+            ctx.link().send_message(Msg::LoadCurrencyData);
+        }
+
         match msg {
             Msg::ClockUpdate(time) => {
                 self.current_date = time; 
@@ -70,22 +78,16 @@ impl Component for CurrencyComponent {
 
     
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let current_date = self.current_date.format("%d/%m/%Y").to_string();
-        let current_time = self.current_date.format("%H:%M:%S").to_string();
+        let current_day: String = self.current_date.format("%A").to_string();
+        let current_date: String = self.current_date.format("%d/%m/%Y").to_string();
+        let current_time: String = self.current_date.format("%H:%M").to_string();
 
         let title_node = html! {
             <div style="width: 100%;text-align: center;">
-                <h1>{ "Home Display" }</h1>
-                <p class="bot-text">{ current_date }</p>
-                <p class="top-text">{ current_time }</p>
+            <p class="time-text">{ current_time }</p>
+                <p class="date-text">{ current_day }</p>
+                <p class="date-text">{ current_date }</p>
             </div>
-        };
-
-        let panel_title = html! {
-            <h3 class="panel-title">
-                { "💲 Currency 💲" }
-                <button class="link-button" onclick={ctx.link().callback(|_| Msg::LoadCurrencyData)}>{ "🔁" }</button>
-            </h3>
         };
 
         if let Some(error) = &self.error {
@@ -93,7 +95,6 @@ impl Component for CurrencyComponent {
                 <div class="panel">
                    { title_node } 
                     <div class="panel-div">
-                        { panel_title }
                         <div>
                             <p style="color: red">{{ error }}</p>
                         </div>
@@ -106,7 +107,6 @@ impl Component for CurrencyComponent {
                 <div class="panel">
                     { title_node }
                     <div class="panel-div">
-                        { panel_title }
                         <div class="ring">
                             <div class="ball-holder">
                                 <div class="ball"></div>
@@ -122,7 +122,7 @@ impl Component for CurrencyComponent {
             let refresh_date = {
                 let date_fetched = DateTime::from_timestamp(conversion.timestamp, 0).unwrap().with_timezone(&Local);
                 let date = format!("{}", date_fetched.format("%d/%m/%Y"));
-                let time = format!("{}", date_fetched.format("%H:%M:%S"));
+                let time = format!("{}", date_fetched.format("%H:%M"));
                 format!("last update {date} {time}")
             };
 
@@ -130,24 +130,20 @@ impl Component for CurrencyComponent {
                 <div class="panel">
                     { title_node }
                     <div class="panel-div">
-                        { panel_title }
                         <div> 
                             <div>
-                                <p style="text-align: center;">
-                                    <span style="border: 2px solid whitesmoke;padding: 0.2em;border-radius: 5px;">
-                                        { from_currency }
-                                    </span>
-                                    { "=" }
-                                    <span style="border: 2px solid whitesmoke;padding: 0.2em;border-radius: 5px;">
-                                        { to_currency }
-                                    </span>
+                                <p class="currency-text">
+                                    { from_currency }
                                 </p>
-                                <small style="font-size: 0.7em;">
-                                    { refresh_date }
-                                </small>
+                                <p class="currency-text">
+                                    { to_currency }
+                                </p>
                             </div>
                         </div>
                     </div>
+                    <small class="refresh-text">
+                        { refresh_date }
+                    </small>
                 </div>
             }
         }
@@ -156,13 +152,10 @@ impl Component for CurrencyComponent {
                 <div class="panel">
                     { title_node }
                     <div class="panel-div">
-                        { panel_title }
                         <p>{ "No currency data available" }</p>
                     </div>
                 </div>
             }
         }
-
-
     }
 }

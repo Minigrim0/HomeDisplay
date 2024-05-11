@@ -1,4 +1,4 @@
-use yew::{html, Component, Context, Html};
+use yew::{html, Component, Context, Html, Properties};
 use chrono::prelude::{Local, DateTime, Timelike};
 use futures::StreamExt;
 
@@ -20,10 +20,14 @@ pub enum Msg {
     WeatherDataReceived(Result<WeatherInfo, String>)
 }
 
+#[derive(Properties, PartialEq)]
+pub struct Props {
+    pub must_refresh: bool,
+}
 
 impl Component for WeatherComponent {
     type Message = Msg;
-    type Properties = ();
+    type Properties = Props;
 
     fn create(ctx: &Context<Self>) -> Self {
         ctx.link().send_message(Msg::LoadWeatherData);
@@ -44,6 +48,10 @@ impl Component for WeatherComponent {
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+        if ctx.props().must_refresh {
+            ctx.link().send_message(Msg::LoadWeatherData);
+        }
+
         match msg {
             Msg::ClockUpdate => {
                 let now = Local::now().timestamp();
@@ -74,27 +82,16 @@ impl Component for WeatherComponent {
         }
     }
 
-    fn view(&self, ctx: &Context<Self>) -> Html {
-        let panel_title = html! {
-            <h3 class="panel-title">
-                { "☀️ Weather ☀️" }
-                <button class="link-button" onclick={ctx.link().callback(|_| Msg::LoadWeatherData)}>
-                    { "🔁" }
-                </button>
-            </h3>
-        };
-        
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         if let Some(error) = &self.error {
             html! {
                 <div class="panel panel-div">
-                    { panel_title }
                     <p style="color: red">{{ error }}</p>
                 </div>
             }
         } else if self.loading {
             html! {
                 <div class="panel panel-div">
-                    { panel_title }
                     <div v-if="loading" class="ring">
                         <div class="ball-holder">
                             <div class="ball"></div>
@@ -132,8 +129,6 @@ impl Component for WeatherComponent {
 
             html! {
                 <div class="panel panel-div">
-                    { panel_title }
-                    <h3 class="section-separator-title">{ "🌡️ Temperature 🌡️" }</h3>
                     <div>
                         <p class="central-content">{ temperature }</p>
                         <div class="small-grid">
@@ -142,7 +137,7 @@ impl Component for WeatherComponent {
                             <p class="small-grid-elem">{ max }</p>
                         </div>
                     </div>
-                    <h3 class="section-separator-title">{ "☀️ Weather ☀️" }</h3>
+                    <h3 class="section-separator-title"></h3>
                     <div style="text-align: center;width: 100%;">
                         <img
                             class="central-content"
@@ -156,7 +151,7 @@ impl Component for WeatherComponent {
                     <div style="text-align: center;width: 100%;">
                         <p>{ sun_time }</p>
                     </div>
-                    <small style="font-size: 0.7em;">
+                    <small class="refresh-text">
                         { last_upd }
                     </small>
                 </div>
@@ -164,11 +159,9 @@ impl Component for WeatherComponent {
         } else {
             html! {
                 <div class="panel panel-div">
-                    { panel_title }
                     <p>{ "No weather data available" }</p>
                 </div>
             }
-        }
-        
+        } 
     }
 }
