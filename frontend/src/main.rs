@@ -19,9 +19,9 @@ pub fn app() -> Html {
     // Render the WeatherComponent component
     html! {
         <div class="container">
-            <WeatherComponent />
-            <CurrencyComponent />
-            <TransportsComponent />
+            <WeatherComponent must_refresh=false />
+            <CurrencyComponent must_refresh=false />
+            <TransportsComponent must_refresh=false />
         </div>
     }
 }

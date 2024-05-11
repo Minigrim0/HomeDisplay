@@ -1,6 +1,6 @@
 body {
-    background-color: #000;
-    color: #f2f2f2;
+    background-color: #222;
+    color: #ddd;
     margin: 0;
     padding: 1vh;
 }
@@ -13,8 +13,6 @@ body {
 }
 
 .panel-div {
-    border: 3px solid #f0f0f0d0;
-    border-radius: 10px;
     padding: 0.4em;
 }
 
@@ -125,14 +123,26 @@ body {
     }
 }
 
-.top-text {
-    font-size: 2.5em;
+.time-text {
+    font-size: 3.6em;
     margin: 0;
     width: 100%;
 }
 
-.bot-text {
-    font-size: 1.9em;
+.date-text {
+    font-size: 2.1em;
     margin: 0;
     width: 100%;
+}
+
+.currency-text {
+    text-align: center;
+    font-size: 2em;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.refresh-text {
+    font-size: 0.7em;
+    align-self: flex-end;
 }

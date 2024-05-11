@@ -1,6 +1,6 @@
 use common::models::transports::{Site, Departure};
 use std::collections::HashMap;
-use yew::{html, Html, Component, Context};
+use yew::{html, Component, Context, Html, Properties};
 use futures::stream::StreamExt;
 use chrono::prelude::Local;
 use gloo_console::log;
@@ -29,9 +29,14 @@ pub enum Msg {
     DeparturesDataReceived(Result<(String, Vec<Departure>), (String, String)>),
 }
 
+#[derive(Properties, PartialEq)]
+pub struct Props {
+    pub must_refresh: bool,
+}
+
 impl Component for TransportsComponent {
     type Message = Msg;
-    type Properties = ();
+    type Properties = Props;
 
     fn create(ctx: &Context<Self>) -> Self {
         ctx.link().send_message(Msg::LoadSitessData);
@@ -53,6 +58,10 @@ impl Component for TransportsComponent {
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+        if ctx.props().must_refresh {
+            ctx.link().send_message(Msg::LoadAllDepartures);
+        }
+
         match msg {
             Msg::ClockUpdate => {  // Update timestamps
                 let now = Local::now().timestamp();
@@ -116,25 +125,16 @@ impl Component for TransportsComponent {
         }
     }
 
-    fn view(&self, ctx: &Context<Self>) -> Html {
-        let panel_title = html! {
-            <h3 class="panel-title">
-                { "🚂 Departures 🚂" }
-                <button class="link-button" onclick={ctx.link().callback(|_| Msg::LoadAllDepartures)}>{ "🔁" }</button>
-            </h3>
-        };
-
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         if let Some(error) = &self.error {
             html! {
                 <div class="panel panel-div">
-                    { panel_title }
                     <p style="color: red">{{ error }}</p>
                 </div>
             }
         } else if self.loading {
             html! {
                 <div class="panel panel-div">
-                    { panel_title }
                     <div v-if="loading" class="ring">
                         <div class="ball-holder">
                             <div class="ball"></div>
@@ -151,9 +151,8 @@ impl Component for TransportsComponent {
 
             html! {
                 <div class="panel panel-div">
-                    { panel_title }
                     { self.sites.iter().map(|site| {
-                        let site_name = &site.name;
+                        let site_name = format!("🚂 {}", &site.name);
                         if let Some(error) = self.site_errors.get(&site.id) {
                             html! {
                                 <div>
@@ -177,7 +176,7 @@ impl Component for TransportsComponent {
                             }
                         }
                     }).collect::<Html>() }
-                    <small>{ last_update }</small>
+                    <small class="refresh-text">{ last_update }</small>
                 </div>
             }
         }
