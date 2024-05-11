@@ -77,7 +77,7 @@ impl Component for CurrencyComponent {
     }
 
     
-    fn view(&self, ctx: &Context<Self>) -> Html {
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         let current_day: String = self.current_date.format("%A").to_string();
         let current_date: String = self.current_date.format("%d/%m/%Y").to_string();
         let current_time: String = self.current_date.format("%H:%M").to_string();
