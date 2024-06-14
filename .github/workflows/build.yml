@@ -15,7 +15,7 @@ jobs:
           base_image: https://dietpi.com/downloads/images/DietPi_RPi-ARMv8-Bullseye.img.xz
           cpu: cortex-a53
           bind_mount_repository: true
-          image_additional_mb: 4096
+          image_additional_mb: 8192
           optimize_image: false
           commands: |
             # Rust complains (rightly) that $HOME doesn't match eid home
