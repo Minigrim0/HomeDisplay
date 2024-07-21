@@ -50,3 +50,6 @@ This project is intended to run on a raspberryPi. The script `arm_comp.sh` serve
 * [openweathermap](https://home.openweathermap.org/) For weather information
 * [openexchangerate](https://openexchangerates.org/) For currency conversion
 * [sl.se](https://sl.se/) (through [trafiklab.se](https://www.trafiklab.se/)) For real-time transports information in Stockholm
+
+# TUI
+A tui version is underway for lower-end devices (raspberrypi 3b)
