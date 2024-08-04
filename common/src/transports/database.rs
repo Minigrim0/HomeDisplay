@@ -9,7 +9,7 @@ use unidecode::unidecode;
 
 use crate::database;
 use crate::traits::{Api, Api1Param};
-use common::models::transports::{Site, Departure};
+use crate::models::transports::{Site, Departure};
 
 
 #[derive(Serialize, Deserialize)]

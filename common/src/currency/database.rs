@@ -5,7 +5,7 @@ use serde_json;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::database;
-use common::models::currency::Conversion;
+use crate::models::currency::Conversion;
 use crate::traits::Api;
 
 

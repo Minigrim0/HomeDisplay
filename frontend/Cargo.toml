@@ -1,9 +1,9 @@
 [package]
 name = "frontend"
+description = "The yew frontend for the tauri application"
+authors = ["Minigrim0"]
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 js-sys = "0.3.69"
@@ -11,7 +11,7 @@ wasm-bindgen = "0.2.92"
 wasm-bindgen-futures = "0.4.42"
 web-sys = "0.3.69"
 yew = { version = "0.21.0", features = ["csr"] }
-common = { path = "../common" }
+common = { path = "../common",  features = [] }
 serde-wasm-bindgen = "0.6.5"
 serde = { version = "1.0", features = ["derive"] }
 chrono = "0.4.38"

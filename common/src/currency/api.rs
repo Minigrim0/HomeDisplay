@@ -5,7 +5,7 @@ use std::env::var;
 use async_trait::async_trait;
 
 use crate::traits::Api;
-use common::models::currency::Conversion;
+use crate::models::currency::Conversion;
 
 #[derive(Deserialize, Debug)]
 /// An API response from Open Exchange Rates
