@@ -5,8 +5,7 @@ use log::{info, warn};
 use async_trait::async_trait;
 
 use crate::traits::Api;
-
-use common::models::weather::WeatherInfo;
+use crate::models::weather::WeatherInfo;
 
 #[async_trait]
 impl Api<WeatherInfo> for WeatherInfo {

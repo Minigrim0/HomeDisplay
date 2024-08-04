@@ -4,7 +4,7 @@ use serde_derive::{Deserialize, Serialize};
 use async_trait::async_trait;
 
 use crate::traits::{Api, Api1Param};
-use common::models::transports::{Coordinates, Departure, Site};
+use crate::models::transports::{Coordinates, Departure, Site};
 
 
 #[derive(Serialize, Deserialize, Debug)]

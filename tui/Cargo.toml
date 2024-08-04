@@ -1,0 +1,8 @@
+[package]
+name = "home-display-tui"
+version = "0.3.0"
+description = "A tui application for home-display"
+authors = ["Minigrim0"]
+license = ""
+repository = ""
+edition = "2021"
