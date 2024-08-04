@@ -1,8 +1,12 @@
 [package]
-name = "home-display-tui"
+name = "hd-tui"
 version = "0.3.0"
 description = "A tui application for home-display"
 authors = ["Minigrim0"]
-license = ""
-repository = ""
+license = "MIT"
+repository = "https://github.com/Minigrim0/HomeDisplay"
 edition = "2021"
+
+[dependencies]
+ratatui = "0.27.0"
+common = { path = "../common" }

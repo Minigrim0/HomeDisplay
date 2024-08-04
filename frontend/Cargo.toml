@@ -3,6 +3,8 @@ name = "frontend"
 description = "The yew frontend for the tauri application"
 authors = ["Minigrim0"]
 version = "0.1.0"
+license = "MIT"
+repository = "https://github.com/Minigrim0/HomeDisplay"
 edition = "2021"
 
 [dependencies]

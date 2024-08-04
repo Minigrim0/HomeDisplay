@@ -6,20 +6,3 @@ members = [
     "tui"
 ]
 resolver = "2"
-
-[package]
-name = "home-display"
-version = "0.3.0"
-description = "A home display for nearby bus stops, weather information and currency exchange rates"
-authors = ["Minigrim0"]
-license = ""
-repository = ""
-edition = "2021"
-
-[[bin]]
-name = "home-display-tauri"
-path = "src-tauri/main.rs"
-
-[[bin]]
-name = "home-display-tui"
-path = "tui/main.rs"
