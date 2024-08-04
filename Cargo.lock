@@ -1779,6 +1779,7 @@ dependencies = [
 name = "hd-tui"
 version = "0.3.0"
 dependencies = [
+ "chrono",
  "common",
  "ratatui",
  "tokio",
