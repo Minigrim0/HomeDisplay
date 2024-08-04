@@ -1,10 +1,10 @@
 [package]
-name = "home-display-tauri"
+name = "hd-tauri"
 version = "0.3.0"
 description = "A tauri application for home-display"
 authors = ["Minigrim0"]
-license = ""
-repository = ""
+license = "MIT"
+repository = "https://github.com/Minigrim0/HomeDisplay"
 edition = "2021"
 
 [build-dependencies]
