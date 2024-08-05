@@ -7,15 +7,21 @@ use ratatui::{
     Frame,
 };
 
+use crate::currency::CurrencyComponent;
+use crate::datetime::DateTimeComponent;
+use crate::transports::TransportComponent;
 use crate::tui::Tui;
-use crate::wrappers::WrappedWeather;
+use crate::weather::WeatherComponent;
 use crate::utilities;
 
 #[derive(Debug, Default)]
 // Application state
 pub struct App {
     pub exit: bool,
-    pub weather: WrappedWeather,
+    pub weather: WeatherComponent,
+    pub datetime: DateTimeComponent,
+    pub currency: CurrencyComponent,
+    pub transports: TransportComponent,
 }
 
 impl App {
@@ -31,7 +37,36 @@ impl App {
     }
 
     fn render_frame(&self, frame: &mut Frame) {
-        frame.render_widget(self, frame.size())
+        let frame_size = {
+            let mut fs = frame.size();
+            fs.width = fs.width / 3;
+            fs
+        };
+        frame.render_widget(&self.weather, frame_size);
+        let frame_size = {
+            let mut fs = frame.size();
+            fs.width = fs.width / 3;
+            fs.height = fs.height / 2;
+            fs.x = fs.width;
+            fs
+        };
+        frame.render_widget(&self.datetime, frame_size);
+        let frame_size = {
+            let mut fs = frame.size();
+            fs.width = fs.width / 3;
+            fs.height = fs.height / 2;
+            fs.x = fs.width;
+            fs.y = fs.height + 1;
+            fs
+        };
+        frame.render_widget(&self.currency, frame_size);
+        let frame_size = {
+            let mut fs = frame.size();
+            fs.width = fs.width / 3;
+            fs.x = 2 * fs.width;
+            fs
+        };
+        frame.render_widget(&self.transports, frame_size);
     }
 
     fn update_state(&mut self) -> io::Result<()> {
@@ -39,7 +74,7 @@ impl App {
             Ok(duration) => if duration > self.weather.cooldown {
                 self.weather = utilities::refresh_weather();
             },
-            Err(e) => self.weather = WrappedWeather::new(Err(e.to_string()))
+            Err(e) => self.weather = WeatherComponent::new(Err(e.to_string()))
         }
 
         Ok(())
@@ -47,6 +82,7 @@ impl App {
 
     fn force_complete_refresh(&mut self) {
         self.weather = utilities::refresh_weather();
+        self.currency = utilities::refresh_conversion();
     }
 
     fn exit(&mut self) {

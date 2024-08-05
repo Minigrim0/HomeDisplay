@@ -1,11 +1,14 @@
 use std::io;
 use std::default::Default;
 
-mod tui;
-mod wrappers;
 mod app;
+mod currency;
+mod datetime;
+mod layout;
+mod transports;
+mod tui;
 mod utilities;
-mod widget;
+mod weather;
 
 use app::App;
 
