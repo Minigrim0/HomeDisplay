@@ -1,5 +1,5 @@
 use std::time::{SystemTime, Duration};
-use chrono::prelude::{Local, DateTime, Timelike};
+use chrono::prelude::{Local, DateTime};
 
 use ratatui::{
     buffer::Buffer,
