@@ -1,6 +1,6 @@
 [package]
 name = "hd-tui"
-version = "0.3.0"
+version = "0.4.5"
 description = "A tui application for home-display"
 authors = ["Minigrim0"]
 license = "MIT"
@@ -12,3 +12,6 @@ ratatui = "0.27.0"
 common = { path = "../common" }
 tokio = "1.39.2"
 chrono = "0.4.38"
+simplelog = "0.12.2"
+clap = { version = "4.5.13", features = ["derive"] }
+log = "0.4.22"
