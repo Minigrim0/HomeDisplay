@@ -26,9 +26,8 @@ jobs:
             apt-get update -y --allow-releaseinfo-change
             apt-get upgrade -y
             apt-get install curl
-            curl https://sh.rustup.rs -sSf | sh -s -- -y
+            curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal
             . "$HOME/.cargo/env"
-            curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash
             # Build the TUI application
             cargo build --release --bin hd-tui
             # Install build tools and tauri-cli requirements
