@@ -5,24 +5,32 @@ This project aims to provide timings for nearby bus stop, meteo information and 
 ![homedisplay](.github/homedisplay.png)
 
 # Organisation 🛠️
-The Tauri app is used to display & interact with the results from the APIs (cached in redis). It serves as a desktop application that displays (~in real time)
-the data of the different APIs. It relies on an external redis storage to cache results.
-
+The Tauri app is used to display & interact with the results from the APIs (cached in redis).
+It serves as a desktop application that displays (~in real time) the data of the different APIs.
+It relies on an external redis storage to cache results.
 
 # App 💻
-To run the tauri application run `cargo tauri dev`. This will build the app and start it in development mode.
+To run the tauri application run `cargo tauri dev` from the root of the project. This will build the app and start it in development mode.
 In order to be able to use the APIs directly, some variables need to be set. See the [configuration](#configuration-🛠) section for more information.
 
-## Compile for ARM
+The frontend is built with rust using the [Yew](https://yew.rs) framework.
+
+# TUI 📟
+A TUI version is available for lower-end devices (e.g. raspberrypi-3b) or devices without a graphical interface.
+The TUI is a simple text interface that displays the same information as the GUI. In order to build the tui,
+run `cargo build --release --bin hd-tui`.
+
+![tui](.github/tui.gif)
+
+gif generated using [VHS](https://github.com/charmbracelet/vhs) (`vhs .github/tui.tape`).
+
+# Compile for ARM 🛠️
 This project is intended to run on a raspberryPi. The script `arm_comp.sh` serve to compile and build a `.deb` package for raspbian. Only ubuntu is supported as of now.
 
 # APIs 🌐
 * [openweathermap](https://home.openweathermap.org/) For weather information
 * [openexchangerate](https://openexchangerates.org/) For currency conversion
 * [sl.se](https://sl.se/) (through [trafiklab.se](https://www.trafiklab.se/)) For real-time transports information in Stockholm
-
-# TUI 📟
-A tui version is underway for lower-end devices (raspberrypi 3b)
 
 # Configuration 🛠
 
