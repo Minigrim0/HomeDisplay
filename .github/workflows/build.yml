@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: pguyot/arm-runner-action@v2.5.2
+      - uses: pguyot/arm-runner-action@v2.6.5
         with:
           base_image: dietpi:rpi_armv8_bullseye
           cpu: cortex-a53
