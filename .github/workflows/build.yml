@@ -25,7 +25,7 @@ jobs:
             # Install setup prerequisites
             apt-get update -y --allow-releaseinfo-change
             apt-get upgrade -y
-            apt-get install curl gcc-aarch64-linux-gnu gcc-multilib -y
+            apt-get install curl gcc-aarch64-linux-gnu libc-dev -y
             curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal
             . "$HOME/.cargo/env"
             # Build the TUI application
