@@ -4,7 +4,6 @@ use std::default::Default;
 mod app;
 mod currency;
 mod datetime;
-mod layout;
 mod transports;
 mod tui;
 mod utilities;

@@ -27,7 +27,7 @@ pub struct App {
 impl App {
     /// runs the application's main loop until the user quits
     pub fn run(&mut self, terminal: &mut Tui) -> io::Result<()> {
-        self.force_complete_refresh();
+        self.force_complete_refresh();  // Initial refresh
         while !self.exit {
             terminal.draw(|frame| self.render_frame(frame))?;
             self.handle_events()?;
@@ -100,23 +100,17 @@ impl App {
         utilities::refresh_sites(&mut self.transports);
     }
 
-    fn exit(&mut self) {
-        self.exit = true;
-    }
-
     fn handle_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
-            KeyCode::Char('q') => self.exit(),
+            KeyCode::Char('q') => self.exit = true,
             KeyCode::Char('r') => self.force_complete_refresh(),
             _ => {}
         }
     }
 
     fn handle_events(&mut self) -> io::Result<()> {
-        if poll(Duration::from_millis(100))? {
+        if poll(Duration::from_millis(500))? {  // Poll for events during 500ms -> ~2fps
             match event::read()? {
-                // it's important to check that the event is a key press event as
-                // crossterm also emits key release and repeat events on Windows.
                 Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
                     self.handle_key_event(key_event)
                 }
