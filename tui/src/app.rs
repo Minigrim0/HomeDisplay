@@ -77,6 +77,20 @@ impl App {
             Err(e) => self.weather = WeatherComponent::new(Err(e.to_string()))
         }
 
+        match SystemTime::now().duration_since(self.currency.last_refresh) {
+            Ok(duration) => if duration > self.currency.cooldown {
+                self.currency = utilities::refresh_conversion();
+            },
+            Err(e) => self.currency = CurrencyComponent::new(Err(e.to_string()))
+        }
+
+        match SystemTime::now().duration_since(self.transports.last_refresh) {
+            Ok(duration) => if duration > self.transports.cooldown {
+                utilities::refresh_sites(&mut self.transports);
+            },
+            Err(e) => self.transports.departures.error = Some(e.to_string())
+        }
+
         Ok(())
     }
 
