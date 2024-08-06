@@ -15,6 +15,7 @@ jobs:
           base_image: dietpi:rpi_armv8_bullseye
           cpu: cortex-a53
           bind_mount_repository: true
+          image_additional_mb: 10240
           optimize_image: false
           commands: |
             # Rust complains (rightly) that $HOME doesn't match eid home
