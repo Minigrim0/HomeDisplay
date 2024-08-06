@@ -1,6 +1,5 @@
 use std::time::{SystemTime, Duration};
 use std::collections::HashMap;
-use chrono::prelude::{Local, DateTime, Timelike};
 
 use ratatui::{
     buffer::Buffer,
@@ -17,26 +16,35 @@ use common::models::transports::{Site, Departure};
 
 #[derive(Debug)]
 pub struct Departures {
-    sites: Vec<Site>,
-    departures: HashMap<String, Vec<Departure>>,
-    site_errors: HashMap<String, String>,
-    last_update: i64,
-    time_since_last_update: i64,
-    error: Option<String>,
+    pub sites: Vec<Site>,
+    pub departures: HashMap<String, Vec<Departure>>,
+    pub site_errors: HashMap<String, String>,
+    pub error: Option<String>,
+}
+
+impl Default for Departures {
+    fn default() -> Departures {
+        Departures {
+            sites: Vec::new(),
+            departures: HashMap::new(),
+            site_errors: HashMap::new(),
+            error: Some("No departures were fetched yet".to_string()),
+        }
+    }
 }
 
 #[derive(Debug)]
 pub struct TransportComponent {
     pub last_refresh: SystemTime,
-    pub departures: Result<Departures, String>,
+    pub departures: Departures,
     pub cooldown: Duration
 }
 
 impl TransportComponent {
-    pub fn new(weather: Result<Departures, String>) -> TransportComponent {
+    pub fn new(departures: Departures) -> TransportComponent {
         let mut w = TransportComponent::default();
         w.last_refresh = SystemTime::now();
-        w.departures = weather;
+        w.departures = departures;
         w
     }
 }
@@ -45,20 +53,19 @@ impl Default for TransportComponent {
     fn default() -> TransportComponent {
         TransportComponent {
             last_refresh: SystemTime::now(),
-            departures: Err("No departures were fetched yet".to_string()),
-            cooldown: Duration::from_secs(30 * 60)
+            departures: Departures::default(),
+            cooldown: Duration::from_secs(60)
         }
     }
 }
-
 
 impl Widget for &TransportComponent {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let last_refreshed = Title::from(Line::from(
             match SystemTime::now().duration_since(self.last_refresh) {
                 Ok(duration) => {
-                    let minutes = duration.as_secs() / 60;
-                    format!("{} minute{} ago", minutes, if minutes > 1 { "s" } else { "" })
+                    let seconds = duration.as_secs();
+                    format!("{} second{} ago", seconds, if seconds > 1 { "s" } else { "" })
                 },
                 Err(e) => format!("Err: {}", e.to_string())
             }
@@ -73,27 +80,34 @@ impl Widget for &TransportComponent {
             )
             .border_set(border::THICK);
 
-        let counter_text: Text = match &self.departures {
-            Ok(departure) => {
+        let counter_text: Text = if let Some(e) = &self.departures.error {
+            Text::from(vec![
+                Line::from(""),
+                Line::from(
+                    "Error !".red().bold(),
+                ).centered(),
+                Line::from(
+                    e.to_string().yellow(),
+                ).centered()
+            ])
+        } else {
+            let mut lines: Vec<Line> = vec![
+                Line::from("Departures").bold().centered().underlined(),
+                Line::from(""),
+            ];
 
-                let separator = "-".repeat((0.66 * area.width as f32) as usize);
+            for site in &self.departures.sites {
+                lines.push(Line::from(format!(" {}", site.name.as_str()).red().bold().underlined()));
+                if self.departures.site_errors.contains_key(&site.id) {
+                    lines.push(Line::from(format!("Error: {}", self.departures.site_errors[&site.id])))
+                }
+                for departure in &self.departures.departures[&site.id] {
+                    lines.push(Line::from(format!(" {:6} - {} {}", departure.display, departure.line.id, departure.destination)));
+                }
+                lines.push(Line::from(""));
+            }
 
-                Text::from(
-                vec![
-                    Line::from("Departures here").centered()
-                ]
-            )},
-            Err(e) => Text::from(
-                vec![
-                    Line::from(""),
-                    Line::from(
-                        "Error !".red().bold(),
-                    ).centered(),
-                    Line::from(
-                        e.to_string().yellow(),
-                    ).centered()
-                ]
-            )
+            Text::from(lines)
         };
 
         Paragraph::new(counter_text)

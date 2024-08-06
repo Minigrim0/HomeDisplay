@@ -84,10 +84,10 @@ impl Widget for &CurrencyComponent {
                 vec![
                     Line::from(
                         "Error !".red().bold(),
-                    ),
+                    ).centered(),
                     Line::from(
                         e.to_string().yellow(),
-                    )
+                    ).centered()
                 ]
             )
         };
