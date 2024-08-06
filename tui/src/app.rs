@@ -83,6 +83,7 @@ impl App {
     fn force_complete_refresh(&mut self) {
         self.weather = utilities::refresh_weather();
         self.currency = utilities::refresh_conversion();
+        utilities::refresh_sites(&mut self.transports);
     }
 
     fn exit(&mut self) {

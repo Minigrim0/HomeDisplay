@@ -140,10 +140,10 @@ impl Widget for &WeatherComponent {
                 vec![
                     Line::from(
                         "Error !".red().bold(),
-                    ),
+                    ).centered(),
                     Line::from(
                         e.to_string().yellow(),
-                    )
+                    ).centered(),
                 ]
             )
         };
