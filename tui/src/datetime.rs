@@ -30,14 +30,16 @@ impl Widget for &DateTimeComponent {
         let current_date: String = Local::now().format("%d/%m/%Y").to_string();
         let current_time: String = Local::now().format("%H:%M").to_string();
 
-        let datetime_text = Text::from(
-            vec![
-                Line::from(""),
-                Line::from(current_time).bold().centered(),
-                Line::from(current_day).blue().centered(),
-                Line::from(current_date).bold().centered()
-            ]
-        );
+        let mut lines: Vec<Line> = Vec::new();
+        for _ in 1..(area.height - 3) / 2 {
+            lines.push(Line::from(""))
+        }
+
+        lines.push(Line::from(current_time).bold().centered());
+        lines.push(Line::from(current_day).blue().centered());
+        lines.push(Line::from(current_date).bold().centered());
+
+        let datetime_text = Text::from(lines);
 
         Paragraph::new(datetime_text)
             .block(datetime_block)
