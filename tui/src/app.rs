@@ -1,4 +1,5 @@
 use log::error;
+use ratatui::layout::Rect;
 use std::default::Default;
 use std::io::{self, ErrorKind};
 use std::time::{Duration, SystemTime};
@@ -28,15 +29,15 @@ pub struct App {
 impl App {
     /// runs the application's main loop until the user quits
     pub fn run(&mut self, terminal: &mut Tui) -> io::Result<()> {
-        if let Ok(size) = terminal.size() {
-            if size.height < 5 || size.width < 30 {
-                error!("{}x{} is not big enough", size.width, size.height);
-                return Err(io::Error::new(ErrorKind::Other, "Terminal not big enough"));
-            }
-        }
-
         self.force_complete_refresh(); // Initial refresh
         while !self.exit {
+            if let Ok(size) = terminal.size() {
+                if size.height < 5 || size.width < 30 {
+                    error!("{}x{} is not big enough", size.width, size.height);
+                    return Err(io::Error::new(ErrorKind::Other, "Terminal not big enough"));
+                }
+            }
+
             terminal.draw(|frame| self.render_frame(frame))?;
             self.handle_events()?;
             self.update_state()?;
@@ -45,36 +46,43 @@ impl App {
     }
 
     fn render_frame(&self, frame: &mut Frame) {
-        let frame_size = {
-            let mut fs = frame.size();
-            fs.width = fs.width / 3;
-            fs
-        };
-        frame.render_widget(&self.weather, frame_size);
-        let frame_size = {
-            let mut fs = frame.size();
-            fs.width = fs.width / 3;
-            fs.height = fs.height / 2;
-            fs.x = fs.width;
-            fs
-        };
-        frame.render_widget(&self.datetime, frame_size);
-        let frame_size = {
-            let mut fs = frame.size();
-            fs.width = fs.width / 3;
-            fs.height = fs.height / 2;
-            fs.x = fs.width;
-            fs.y = fs.height + 1;
-            fs
-        };
-        frame.render_widget(&self.currency, frame_size);
-        let frame_size = {
-            let mut fs = frame.size();
-            fs.width = fs.width / 3;
-            fs.x = 2 * fs.width;
-            fs
-        };
-        frame.render_widget(&self.transports, frame_size);
+        let fs: Rect = frame.size();
+        frame.render_widget(
+            &self.weather,
+            Rect {
+                width: fs.width / 3,
+                height: fs.height,
+                x: 0,
+                y: 0,
+            },
+        );
+        frame.render_widget(
+            &self.datetime,
+            Rect {
+                width: fs.width / 3,
+                height: fs.height / 2,
+                x: fs.width / 3,
+                y: 0,
+            },
+        );
+        frame.render_widget(
+            &self.currency,
+            Rect {
+                width: fs.width / 3,
+                height: fs.height / 2,
+                x: fs.width / 3,
+                y: (fs.height / 2) + 1,
+            },
+        );
+        frame.render_widget(
+            &self.transports,
+            Rect {
+                width: fs.width / 3,
+                height: fs.height,
+                x: 2 * (fs.width / 3),
+                y: 0,
+            },
+        );
     }
 
     fn update_state(&mut self) -> io::Result<()> {
