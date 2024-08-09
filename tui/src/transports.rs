@@ -1,5 +1,5 @@
-use std::time::{SystemTime, Duration};
 use std::collections::HashMap;
+use std::time::{Duration, SystemTime};
 
 use ratatui::{
     buffer::Buffer,
@@ -8,11 +8,14 @@ use ratatui::{
     symbols::border,
     text::{Line, Text},
     widgets::{
-        block::{Position, Title}, Block, Borders, Paragraph, Widget
+        block::{Position, Title},
+        Block, Borders, Paragraph, Widget,
     },
 };
 
-use common::models::transports::{Site, Departure};
+use common::models::transports::{Departure, Site};
+
+use crate::utilities::fit_into;
 
 #[derive(Debug)]
 pub struct Departures {
@@ -37,7 +40,7 @@ impl Default for Departures {
 pub struct TransportComponent {
     pub last_refresh: SystemTime,
     pub departures: Departures,
-    pub cooldown: Duration
+    pub cooldown: Duration,
 }
 
 impl TransportComponent {
@@ -54,7 +57,7 @@ impl Default for TransportComponent {
         TransportComponent {
             last_refresh: SystemTime::now(),
             departures: Departures::default(),
-            cooldown: Duration::from_secs(60)
+            cooldown: Duration::from_secs(60),
         }
     }
 }
@@ -65,10 +68,14 @@ impl Widget for &TransportComponent {
             match SystemTime::now().duration_since(self.last_refresh) {
                 Ok(duration) => {
                     let seconds = duration.as_secs();
-                    format!("{} second{} ago", seconds, if seconds > 1 { "s" } else { "" })
-                },
-                Err(e) => format!("Err: {}", e.to_string())
-            }
+                    format!(
+                        "{} second{} ago",
+                        seconds,
+                        if seconds > 1 { "s" } else { "" }
+                    )
+                }
+                Err(e) => format!("Err: {}", e.to_string()),
+            },
         ));
 
         let weather_block = Block::new()
@@ -81,15 +88,18 @@ impl Widget for &TransportComponent {
             .border_set(border::THICK);
 
         let counter_text: Text = if let Some(e) = &self.departures.error {
-            Text::from(vec![
-                Line::from(""),
-                Line::from(
-                    "Error !".red().bold(),
-                ).centered(),
-                Line::from(
-                    e.to_string().yellow(),
-                ).centered()
-            ])
+            let error_lines = fit_into(e.to_string(), (area.width - 2) as usize);
+            let mut lines: Vec<Line> = Vec::new();
+            for _ in 1..(area.height - error_lines.len() as u16) / 2 {
+                lines.push(Line::from(""))
+            }
+
+            lines.push(Line::from("Error !".red().bold()).centered());
+            for line in error_lines {
+                lines.push(Line::from(line.to_string().yellow()).centered())
+            }
+
+            Text::from(lines)
         } else {
             let mut lines: Vec<Line> = vec![
                 Line::from("Departures").bold().centered().underlined(),
@@ -97,12 +107,20 @@ impl Widget for &TransportComponent {
             ];
 
             for site in &self.departures.sites {
-                lines.push(Line::from(format!(" {}", site.name.as_str()).red().bold().underlined()));
+                lines.push(Line::from(
+                    format!(" {}", site.name.as_str()).red().bold().underlined(),
+                ));
                 if self.departures.site_errors.contains_key(&site.id) {
-                    lines.push(Line::from(format!("Error: {}", self.departures.site_errors[&site.id])))
+                    lines.push(Line::from(format!(
+                        "Error: {}",
+                        self.departures.site_errors[&site.id]
+                    )))
                 }
                 for departure in &self.departures.departures[&site.id] {
-                    lines.push(Line::from(format!(" {:6} - {} {}", departure.display, departure.line.id, departure.destination)));
+                    lines.push(Line::from(format!(
+                        " {:6} - {} {}",
+                        departure.display, departure.line.id, departure.destination
+                    )));
                 }
                 lines.push(Line::from(""));
             }
