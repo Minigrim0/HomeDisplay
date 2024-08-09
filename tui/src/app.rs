@@ -1,9 +1,10 @@
-use std::io;
-use std::time::{Duration, SystemTime};
+use log::error;
 use std::default::Default;
+use std::io::{self, ErrorKind};
+use std::time::{Duration, SystemTime};
 
 use ratatui::{
-    crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, poll},
+    crossterm::event::{self, poll, Event, KeyCode, KeyEvent, KeyEventKind},
     Frame,
 };
 
@@ -11,8 +12,8 @@ use crate::currency::CurrencyComponent;
 use crate::datetime::DateTimeComponent;
 use crate::transports::TransportComponent;
 use crate::tui::Tui;
-use crate::weather::WeatherComponent;
 use crate::utilities;
+use crate::weather::WeatherComponent;
 
 #[derive(Debug, Default)]
 // Application state
@@ -27,7 +28,14 @@ pub struct App {
 impl App {
     /// runs the application's main loop until the user quits
     pub fn run(&mut self, terminal: &mut Tui) -> io::Result<()> {
-        self.force_complete_refresh();  // Initial refresh
+        if let Ok(size) = terminal.size() {
+            if size.height < 5 || size.width < 30 {
+                error!("{}x{} is not big enough", size.width, size.height);
+                return Err(io::Error::new(ErrorKind::Other, "Terminal not big enough"));
+            }
+        }
+
+        self.force_complete_refresh(); // Initial refresh
         while !self.exit {
             terminal.draw(|frame| self.render_frame(frame))?;
             self.handle_events()?;
@@ -71,24 +79,30 @@ impl App {
 
     fn update_state(&mut self) -> io::Result<()> {
         match SystemTime::now().duration_since(self.weather.last_refresh) {
-            Ok(duration) => if duration > self.weather.cooldown {
-                self.weather = utilities::refresh_weather();
-            },
-            Err(e) => self.weather = WeatherComponent::new(Err(e.to_string()))
+            Ok(duration) => {
+                if duration > self.weather.cooldown {
+                    self.weather = utilities::refresh_weather();
+                }
+            }
+            Err(e) => self.weather = WeatherComponent::new(Err(e.to_string())),
         }
 
         match SystemTime::now().duration_since(self.currency.last_refresh) {
-            Ok(duration) => if duration > self.currency.cooldown {
-                self.currency = utilities::refresh_conversion();
-            },
-            Err(e) => self.currency = CurrencyComponent::new(Err(e.to_string()))
+            Ok(duration) => {
+                if duration > self.currency.cooldown {
+                    self.currency = utilities::refresh_conversion();
+                }
+            }
+            Err(e) => self.currency = CurrencyComponent::new(Err(e.to_string())),
         }
 
         match SystemTime::now().duration_since(self.transports.last_refresh) {
-            Ok(duration) => if duration > self.transports.cooldown {
-                utilities::refresh_sites(&mut self.transports);
-            },
-            Err(e) => self.transports.departures.error = Some(e.to_string())
+            Ok(duration) => {
+                if duration > self.transports.cooldown {
+                    utilities::refresh_sites(&mut self.transports);
+                }
+            }
+            Err(e) => self.transports.departures.error = Some(e.to_string()),
         }
 
         Ok(())
@@ -109,7 +123,8 @@ impl App {
     }
 
     fn handle_events(&mut self) -> io::Result<()> {
-        if poll(Duration::from_millis(500))? {  // Poll for events during 500ms -> ~2fps
+        if poll(Duration::from_millis(500))? {
+            // Poll for events during 500ms -> ~2fps
             match event::read()? {
                 Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
                     self.handle_key_event(key_event)
