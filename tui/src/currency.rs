@@ -1,5 +1,5 @@
-use std::time::{SystemTime, Duration};
-use chrono::prelude::{Local, DateTime};
+use chrono::prelude::{DateTime, Local};
+use std::time::{Duration, SystemTime};
 
 use ratatui::{
     buffer::Buffer,
@@ -7,18 +7,20 @@ use ratatui::{
     style::Stylize,
     text::{Line, Text},
     widgets::{
-        block::{Position, Title}, Block, Paragraph, Widget
+        block::{Position, Title},
+        Block, Paragraph, Widget,
     },
 };
 
 use common::models::currency::Conversion;
 
+use crate::utilities::fit_into;
 
 #[derive(Debug)]
 pub struct CurrencyComponent {
     pub last_refresh: SystemTime,
     pub conversion: Result<Conversion, String>,
-    pub cooldown: Duration
+    pub cooldown: Duration,
 }
 
 impl Default for CurrencyComponent {
@@ -26,7 +28,7 @@ impl Default for CurrencyComponent {
         CurrencyComponent {
             last_refresh: SystemTime::now(),
             conversion: Err("No conversion was fetched yet".to_string()),
-            cooldown: Duration::from_secs(60 * 60)  // Once per hour
+            cooldown: Duration::from_secs(60 * 60), // Once per hour
         }
     }
 }
@@ -46,24 +48,28 @@ impl Widget for &CurrencyComponent {
             match SystemTime::now().duration_since(self.last_refresh) {
                 Ok(duration) => {
                     let minutes = duration.as_secs() / 60;
-                    format!("{} minute{} ago", minutes, if minutes > 1 { "s" } else { "" })
-                },
-                Err(e) => format!("Err: {}", e.to_string())
-            }
+                    format!(
+                        "{} minute{} ago",
+                        minutes,
+                        if minutes > 1 { "s" } else { "" }
+                    )
+                }
+                Err(e) => format!("Err: {}", e.to_string()),
+            },
         ));
 
-        let currency_block = Block::new()
-            .title(
-                last_refreshed
-                    .alignment(Alignment::Center)
-                    .position(Position::Bottom),
-            );
-
+        let currency_block = Block::new().title(
+            last_refreshed
+                .alignment(Alignment::Center)
+                .position(Position::Bottom),
+        );
 
         let currency_text: Text = match &self.conversion {
             Ok(conversion) => {
                 let refresh_date = {
-                    let date_fetched = DateTime::from_timestamp(conversion.timestamp, 0).unwrap().with_timezone(&Local);
+                    let date_fetched = DateTime::from_timestamp(conversion.timestamp, 0)
+                        .unwrap()
+                        .with_timezone(&Local);
                     let date = format!("{}", date_fetched.format("%d/%m/%Y"));
                     let time = format!("{}", date_fetched.format("%H:%M"));
                     format!("last update {date} {time}")
@@ -75,21 +81,27 @@ impl Widget for &CurrencyComponent {
                         conversion.from_currency.as_str().green(),
                         " = ".into(),
                         format!("{:.2} ", conversion.to_currency_amount).bold(),
-                        conversion.to_currency.as_str().green()
-                    ]).centered(),
-                    Line::from(refresh_date.gray()).centered()
+                        conversion.to_currency.as_str().green(),
+                    ])
+                    .centered(),
+                    Line::from(refresh_date.gray()).centered(),
                 ])
-            },
-            Err(e) => Text::from(
-                vec![
-                    Line::from(
-                        "Error !".red().bold(),
-                    ).centered(),
-                    Line::from(
-                        e.to_string().yellow(),
-                    ).centered()
-                ]
-            )
+            }
+            Err(e) => {
+                let error_lines = fit_into(e.to_string(), (area.width - 2) as usize);
+                let mut lines: Vec<Line> = Vec::new();
+
+                for _ in 1..(area.height - error_lines.len() as u16) / 2 {
+                    lines.push(Line::from(""))
+                }
+
+                lines.push(Line::from("Error !".red().bold()).centered());
+                for line in error_lines {
+                    lines.push(Line::from(line).yellow().centered());
+                }
+
+                Text::from(lines)
+            }
         };
 
         Paragraph::new(currency_text)
