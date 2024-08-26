@@ -6,9 +6,7 @@ use ratatui::{
     style::Stylize,
     symbols::border,
     text::{Line, Text},
-    widgets::{
-        Block, Borders, Paragraph, Widget
-    },
+    widgets::{Block, Borders, Paragraph, Widget},
 };
 
 #[derive(Debug, Default)]
@@ -36,7 +34,7 @@ impl Widget for &DateTimeComponent {
         }
 
         lines.push(Line::from(current_time).bold().centered());
-        lines.push(Line::from(current_day).blue().centered());
+        lines.push(Line::from(current_day).blue().centered().bold());
         lines.push(Line::from(current_date).bold().centered());
 
         let datetime_text = Text::from(lines);
