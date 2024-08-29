@@ -107,20 +107,25 @@ impl Widget for &TransportComponent {
             ];
 
             for site in &self.departures.sites {
-                lines.push(Line::from(
-                    format!(" {}", site.name.as_str()).red().bold().underlined(),
-                ));
+                lines.push(Line::from(vec![
+                    " ".into(),
+                    format!("{}", site.name.as_str()).red().bold().underlined(),
+                    " 🚂".into(),
+                ]));
+
                 if self.departures.site_errors.contains_key(&site.id) {
                     lines.push(Line::from(format!(
                         "Error: {}",
                         self.departures.site_errors[&site.id]
                     )))
                 }
+
                 for departure in &self.departures.departures[&site.id] {
-                    lines.push(Line::from(format!(
-                        " {:6} - {} {}",
-                        departure.display, departure.line.id, departure.destination
-                    )));
+                    lines.push(Line::from(vec![
+                        format!("   {:6}", departure.display).into(),
+                        format!(" - {}", departure.line.id).bold(),
+                        format!(" {}", departure.destination).into()
+                    ]));
                 }
                 lines.push(Line::from(""));
             }

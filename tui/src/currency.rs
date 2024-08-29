@@ -75,17 +75,20 @@ impl Widget for &CurrencyComponent {
                     format!("last update {date} {time}")
                 };
 
-                Text::from(vec![
-                    Line::from(vec![
-                        format!("{:.2} ", conversion.from_currency_amount).bold(),
-                        conversion.from_currency.as_str().green(),
-                        " = ".into(),
-                        format!("{:.2} ", conversion.to_currency_amount).bold(),
-                        conversion.to_currency.as_str().green(),
-                    ])
-                    .centered(),
-                    Line::from(refresh_date.gray()).centered(),
-                ])
+                let mut lines: Vec<Line> = Vec::new();
+                for _ in 1..(area.height - 2) / 2 {
+                    lines.push(Line::from(""))
+                }
+                lines.push(Line::from(vec![
+                    format!("{:.2} ", conversion.from_currency_amount).bold(),
+                    conversion.from_currency.as_str().green(),
+                    " = ".into(),
+                    format!("{:.2} ", conversion.to_currency_amount).bold(),
+                    conversion.to_currency.as_str().green(),
+                ]).centered());
+                lines.push(Line::from(refresh_date.gray()).centered());
+
+                Text::from(lines)
             }
             Err(e) => {
                 let error_lines = fit_into(e.to_string(), (area.width - 2) as usize);
