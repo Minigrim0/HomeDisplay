@@ -1,5 +1,4 @@
 use chrono::prelude::{DateTime, Local, Timelike};
-use log::trace;
 use std::time::{Duration, SystemTime};
 
 use ratatui::{
@@ -107,7 +106,7 @@ impl Widget for &WeatherComponent {
                     ])
                     .centered(),
                     Line::from(separator.clone()).centered(),
-                    Line::from("Weather".bold()).centered(),
+                    Line::from("Weather".bold()).centered().underlined(),
                     Line::from(""),
                     Line::from(match weather.weather[0].icon.as_str() {
                         "01d" => "☀",   // Sun
