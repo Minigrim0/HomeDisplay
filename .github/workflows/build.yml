@@ -26,7 +26,7 @@ jobs:
             apt-get update -y --allow-releaseinfo-change
             apt-get upgrade -y
             # Install build tools and tauri requirements
-            apt-get install curl gcc-aarch64-linux-gnu libwebkit2gtk-4.0-dev build-essential wget libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libc-dev libssl-dev -y
+            apt-get install curl gcc-aarch64-linux-gnu libwebkit2gtk-4.0-dev build-essential wget libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libc-dev libc6 libssl-dev -y
             curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal
             . "$HOME/.cargo/env"
             # Build the TUI application
