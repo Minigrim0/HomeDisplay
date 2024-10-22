@@ -70,6 +70,7 @@ pub fn refresh_sites(component: &mut TransportComponent) {
 
     // Reset the error message by default
     component.departures.error = None;
+    component.departures.site_errors.clear();
 
     let sites = match rt.block_on(get_sites()) {
         Ok(currency) => currency,
