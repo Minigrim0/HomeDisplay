@@ -10,6 +10,11 @@ It serves as a desktop application that displays (~in real time) the data of the
 It relies on an external redis storage to cache results.
 
 # App 💻
+Install the tauri cli to be able to run the application.
+```bash
+cargo install tauri-cli
+```
+
 To run the tauri application run `cargo tauri dev` from the root of the project. This will build the app and start it in development mode.
 In order to be able to use the APIs directly, some variables need to be set. See the [configuration](#configuration-🛠) section for more information.
 

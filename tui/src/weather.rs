@@ -22,6 +22,7 @@ pub struct WeatherComponent {
     pub last_refresh: SystemTime,
     pub weather: Result<WeatherInfo, String>,
     pub cooldown: Duration,
+    pub current_forecast_day: u8,
 }
 
 impl WeatherComponent {
@@ -39,13 +40,14 @@ impl Default for WeatherComponent {
             last_refresh: SystemTime::now(),
             weather: Err("No weather was fetched yet".to_string()),
             cooldown: Duration::from_secs(30 * 60),
+            current_forecast_day: 0,
         }
     }
 }
 
 impl Widget for &WeatherComponent {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let last_refreshed = Title::from(Line::from(
+        let last_refreshed = Line::from(
             match SystemTime::now().duration_since(self.last_refresh) {
                 Ok(duration) => {
                     let minutes = duration.as_secs() / 60;
@@ -57,58 +59,64 @@ impl Widget for &WeatherComponent {
                 }
                 Err(e) => format!("Err: {}", e.to_string()),
             },
-        ));
+        );
 
         let weather_block = Block::new()
             .borders(Borders::RIGHT)
-            .title(
-                last_refreshed
-                    .alignment(Alignment::Center)
-                    .position(Position::Bottom),
-            )
+            .title_bottom(last_refreshed.centered())
             .border_set(border::THICK);
 
         let counter_text: Text = match &self.weather {
             Ok(weather) => {
+                let mut errors = vec![];
+
+                let sun_info = weather.daily.get_sun_info().map_err(
+                    |e| errors.push(e.to_string())
+                ).unwrap_or((Local::now().fixed_offset(), Local::now().fixed_offset(), 0.0));
+
                 let sunrise = {
-                    let timestamp = weather.sys.sunrise;
-                    let sunrise = DateTime::from_timestamp(timestamp, 0)
-                        .unwrap()
-                        .with_timezone(&Local);
-                    format!("{:02}:{:02}", sunrise.hour(), sunrise.minute())
+                    format!("{:02}:{:02}",  sun_info.0.hour(),  sun_info.0.minute())
                 };
                 let sunset = {
-                    let timestamp = weather.sys.sunset;
-                    let sunset = DateTime::from_timestamp(timestamp, 0)
-                        .unwrap()
-                        .with_timezone(&Local);
-                    format!("{:02}:{:02}", sunset.hour(), sunset.minute())
+                    format!("{:02}:{:02}",  sun_info.1.hour(),  sun_info.1.minute())
                 };
 
                 let separator = "-".repeat((0.66 * area.width as f32) as usize);
 
+                let weather_info = weather.daily.get_weather_info().map_err(
+                    |e| errors.push(e.to_string())
+                ).unwrap_or(("01d".to_string(), "error".to_string()));
+
+                let forecast = match weather.daily.get_forecast() {
+                    Ok(f) => f,
+                    Err(e) => {
+                        errors.push(format!("Unable to get forecast: {}", e.to_string()));
+                        vec![]
+                    }
+                };
+
                 Text::from(vec![
                     Line::from(""),
                     Line::from(vec![
-                        format!("{:.0}", weather.main.temp).bold(),
+                        format!("{:.0}", weather.current.temperature_2m).bold(),
                         "°C".into(),
                     ])
                     .centered(),
                     Line::from(""),
                     Line::from(vec![
                         "\nFeel: ".into(),
-                        format!("{:.0}", weather.main.feels_like).yellow(),
+                        format!("{:.0}", weather.current.apparent_temperature).yellow(),
                         "°C | ⬇️ ".into(),
-                        format!("{:.0}", weather.main.feels_like).yellow(),
+                        format!("{:.0}", weather.daily.apparent_temperature_min.first().unwrap_or(&-1000.0)).yellow(),
                         "°C | ⬆️ ".into(),
-                        format!("{:.0}", weather.main.feels_like).yellow(),
+                        format!("{:.0}", weather.daily.apparent_temperature_max.first().unwrap_or(&1000.0)).yellow(),
                         "°C".into(),
                     ])
                     .centered(),
                     Line::from(separator.clone()).centered(),
                     Line::from("Weather".bold()).centered().underlined(),
                     Line::from(""),
-                    Line::from(match weather.weather[0].icon.as_str() {
+                    Line::from(match weather_info.0.as_str() {
                         "01d" => "☀",   // Sun
                         "01n" => "🌕",  // Moon
                         "02d" => "☀☁",  // Sun with clouds
@@ -130,8 +138,10 @@ impl Widget for &WeatherComponent {
                         _ => "?",
                     })
                     .centered(),
-                    Line::from(format!("{}", weather.weather[0].description).blue()).centered(),
+                    Line::from(format!("{}", weather_info.1).blue()).centered(),
                     Line::from(""),
+                    Line::from(separator.clone()).centered(),
+                    Line::from("Forecast".bold()).centered(),
                     Line::from(separator.clone()).centered(),
                     Line::from("🌕 Day time ☀️".bold()).centered(),
                     Line::from(""),

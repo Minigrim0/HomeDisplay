@@ -8,7 +8,9 @@ repository = "https://github.com/Minigrim0/HomeDisplay"
 edition = "2021"
 
 [dependencies]
-ratatui = "0.27.0"
+color-eyre = { version = "0.6.3" }
+crossterm = { version = "0.28.1" }
+ratatui = { version = "0.29.0" }
 common = { path = "../common" }
 tokio = "1.39.2"
 chrono = "0.4.38"

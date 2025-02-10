@@ -1,11 +1,11 @@
 use log::error;
-use ratatui::layout::Rect;
 use std::default::Default;
 use std::io::{self, ErrorKind};
 use std::time::{Duration, SystemTime};
 
 use ratatui::{
     crossterm::event::{self, poll, Event, KeyCode, KeyEvent, KeyEventKind},
+    layout::{Constraint, Layout, Rect},
     Frame,
 };
 
@@ -46,42 +46,32 @@ impl App {
     }
 
     fn render_frame(&self, frame: &mut Frame) {
-        let fs: Rect = frame.size();
+        let chunks = Layout::horizontal([
+            Constraint::Ratio(1, 3); 3
+        ])
+        .split(frame.area());
+
+        let middle_split = Layout::vertical([
+            Constraint::Ratio(4, 5),
+            Constraint::Ratio(1, 5),
+        ])
+        .split(chunks[1]);
+
         frame.render_widget(
             &self.weather,
-            Rect {
-                width: fs.width / 3,
-                height: fs.height,
-                x: 0,
-                y: 0,
-            },
+            chunks[0],
         );
         frame.render_widget(
             &self.datetime,
-            Rect {
-                width: fs.width / 3,
-                height: fs.height / 2,
-                x: fs.width / 3,
-                y: 0,
-            },
+            middle_split[0],
         );
         frame.render_widget(
             &self.currency,
-            Rect {
-                width: fs.width / 3,
-                height: fs.height / 2,
-                x: fs.width / 3,
-                y: (fs.height / 2) + 1,
-            },
+            middle_split[1],
         );
         frame.render_widget(
             &self.transports,
-            Rect {
-                width: fs.width / 3,
-                height: fs.height,
-                x: 2 * (fs.width / 3),
-                y: 0,
-            },
+            chunks[2],
         );
     }
 
