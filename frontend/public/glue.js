@@ -1,4 +1,4 @@
-const invoke = window.__TAURI__ !== undefined ? window.__TAURI__.invoke : (e) => {throw new Error(`Tauri not available`);};
+const invoke = window.__TAURI__ !== undefined ? window.__TAURI__.core.invoke : (e) => {throw new Error(`Tauri not available`);};
 
 /**
  * Tauri binding for the `get_sites` function.

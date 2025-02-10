@@ -18,7 +18,7 @@ pub fn fetch_sites(callback: Callback<Result<Vec<Site>, String>>) {
                 callback.emit(sites);
             },
             Err(e) => {
-                callback.emit(Err(serde_wasm_bindgen::from_value(e).unwrap()));
+                callback.emit(serde_wasm_bindgen::from_value(e).map_err(|e| e.to_string()));
             }
         }
     })
@@ -41,6 +41,7 @@ pub fn fetch_departures(site_id: String, callback: Callback<Result<(String, Vec<
     })
 }
 
+/// Returns a stream that emits the current time every second
 pub fn stream_time() -> impl Stream<Item = DateTime<Local>> {
     interval(ONE_SEC).map(|_| Local::now())
 }

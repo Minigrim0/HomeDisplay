@@ -19,7 +19,7 @@ pub fn refresh_currency(callback: Callback<Result<Conversion, String>>) {
                 callback.emit(currency);
             },
             Err(e) => {
-                callback.emit(Err(serde_wasm_bindgen::from_value(e).unwrap()));
+                callback.emit(serde_wasm_bindgen::from_value(e).map_err(|e| e.to_string()));
             }
         }
     });

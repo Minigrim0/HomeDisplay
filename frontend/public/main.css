@@ -146,3 +146,11 @@ body {
     font-size: 0.7em;
     align-self: flex-end;
 }
+
+td {
+    margin: 2px;
+}
+
+td p {
+    margin: 0px;
+}

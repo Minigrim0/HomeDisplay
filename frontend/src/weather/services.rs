@@ -18,7 +18,7 @@ pub fn refresh_weather(callback: Callback<Result<WeatherInfo, String>>) {
                 callback.emit(weather);
             },
             Err(e) => {
-                callback.emit(Err(serde_wasm_bindgen::from_value(e).unwrap()));
+                callback.emit(serde_wasm_bindgen::from_value(e).map_err(|e| e.to_string()));
             }
         }
     });
@@ -34,8 +34,9 @@ pub fn start_weather_job(callback: Callback<Result<WeatherInfo, String>>) {
             sleep(WEATHER_REFRESH_INTERVAL).await;
         }
     });
-} 
+}
 
+/// Returns a stream that emits the current time every second
 pub fn stream_time() -> impl Stream<Item = DateTime<Local>> {
     interval(ONE_SEC).map(|_| Local::now())
 }
