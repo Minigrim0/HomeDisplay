@@ -1,5 +1,5 @@
 use yew::{html, Component, Context, Html, Properties};
-use chrono::prelude::{Local, DateTime, Timelike};
+use chrono::prelude::{Local, Timelike};
 use futures::StreamExt;
 
 use common::models::weather::WeatherInfo;
@@ -63,7 +63,7 @@ impl Component for WeatherComponent {
                 self.loading = true;
                 self.error = None;
                 self.weather = None;
-                self.last_update = Local::now().timestamp(); 
+                self.last_update = Local::now().timestamp();
                 true
             },
             Msg::WeatherDataReceived(result) => {
@@ -100,26 +100,50 @@ impl Component for WeatherComponent {
                 </div>
             }
         } else if let Some(weather) = &self.weather {
-            let temperature = format!("{:.0}°C", weather.main.temp);
-            let feel = format!("Feel {:.0}°C", weather.main.feels_like);
-            let min = format!("⬇️ {:.0}°C", weather.main.temp_min);
-            let max = format!("⬆️ {:.0}°C", weather.main.temp_max);
-    
-            let weather_icon = format!("/static/owm/icons/{}@2x.png", weather.weather[0].icon);
-            let weather_description = &weather.weather[0].description;
+            let mut errors = vec![];
+
+            let temperature = format!("{:.0}°C", weather.current.temperature_2m);
+            let feel = format!("Feel {:.0}°C", weather.current.apparent_temperature);
+            let min = format!("⬇️ {:.0}°C", weather.daily.temperature_2m_min.first().unwrap_or(&-1000.0));
+            let max = format!("⬆️ {:.0}°C", weather.daily.temperature_2m_max.first().unwrap_or(&1000.0));
+
+            let (icon_code, weather_description) = weather.daily.get_weather_info()
+                .map_err(|e| errors.push(format!("Unable to get weather info: {}", e.to_string())))
+                .unwrap_or(("01d".to_string(), "error".to_string()));
+
+            let weather_icon = format!("/static/owm/icons/{}@2x.png", icon_code);
+
+            let (sunrise, sunset, daytime) = match weather.daily.get_sun_info() {
+                Ok((sr, ss, dt)) => (sr, ss, dt),
+                Err(e) => {
+                    errors.push(format!("Unable to get sun data: {}", e.to_string()));
+                    (Local::now().fixed_offset(), Local::now().fixed_offset(), 0.0)
+                }
+            };
 
             let sun_time = {
+                let daytime = {
+                    let daytime = daytime as i32;
+                    let hours = daytime / 3600;
+                    let minutes = (daytime - hours * 3600) / 60;
+                    let seconds = daytime % 60;
+                    format!("{:02}h {:02}m {:02}s", hours, minutes, seconds)
+                };
                 let sunrise = {
-                    let timestamp = weather.sys.sunrise;
-                    let sunrise = DateTime::from_timestamp(timestamp, 0).unwrap().with_timezone(&Local);
                     format!("{:02}:{:02}", sunrise.hour(), sunrise.minute())
                 };
                 let sunset = {
-                    let timestamp = weather.sys.sunset;
-                    let sunset = DateTime::from_timestamp(timestamp, 0).unwrap().with_timezone(&Local);
                     format!("{:02}:{:02}", sunset.hour(), sunset.minute())
                 };
-                format!("🌅 {} 🌄 {}", sunrise, sunset)
+                format!("🌅 {} 🌄 {} ({})", sunrise, sunset, daytime)
+            };
+
+            let forecast = match weather.daily.get_forecast() {
+                Ok(f) => f,
+                Err(e) => {
+                    errors.push(format!("Unable to get forecast: {}", e.to_string()));
+                    vec![]
+                }
             };
 
             let last_upd = {
@@ -147,10 +171,38 @@ impl Component for WeatherComponent {
                         />
                         <p>{ weather_description }</p>
                     </div>
+                    <h3 class="section-separator-title">{ "Forecast" }</h3>
+                    <div style="max-height: 25vh;overflow-y: scroll">
+                        <table>
+                            <tr>
+                                <th></th>
+                                <th></th>
+                                <th>{"min"}</th>
+                                <th>{"max"}</th>
+                                <th>{"uv"}</th>
+                                <th>{"feel min"}</th>
+                                <th>{"feel max"}</th>
+                            </tr>
+                            { forecast.iter().map(|f| html! {
+                                <tr>
+                                    <td><p>{ f.time.format("%a %d").to_string() }</p></td>
+                                    <td><img src={ format!("/static/owm/icons/{:02}@2x.png", f.weather_code) } alt="weather icon" style="max-height: 30px;"/></td>
+                                    <td><p>{ format!("{:.0}°C", f.temperature_2m_min) }</p></td>
+                                    <td><p>{ format!("{:.0}°C", f.temperature_2m_max) }</p></td>
+                                    <td><p>{ format!("{:.0}", f.uv_index_max) }</p></td>
+                                    <td><p>{ format!("{:.0}°C", f.apparent_temperature_min) }</p></td>
+                                    <td><p>{ format!("{:.0}°C", f.apparent_temperature_max) }</p></td>
+                                </tr>
+                            }).collect::<Html>() }
+                        </table>
+                    </div>
                     <h3 class="section-separator-title">{ "🌕 Day time ☀️" }</h3>
                     <div style="text-align: center;width: 100%;">
                         <p>{ sun_time }</p>
                     </div>
+                    <small class="error-list">
+                        { errors.iter().map(|e| html! { <p>{"Error: "}{ e }</p> }).collect::<Html>() }
+                    </small>
                     <small class="refresh-text">
                         { last_upd }
                     </small>
@@ -162,6 +214,6 @@ impl Component for WeatherComponent {
                     <p>{ "No weather data available" }</p>
                 </div>
             }
-        } 
+        }
     }
 }

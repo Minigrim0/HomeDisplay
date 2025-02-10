@@ -8,11 +8,11 @@ repository = "https://github.com/Minigrim0/HomeDisplay"
 edition = "2021"
 
 [build-dependencies]
-tauri-build = { version = "1.4", features = [] }
+tauri-build = { version = "2", features = [] }
 
 [dependencies]
 colored = "2.0.0"
-tauri = { version = "1.4", features = ["shell-open"] }
+tauri = { version = "2", features = [] }
 tokio = { version = "1.29.1", features = ["full"] }
 log = "0.4.21"
 env_logger = "0.11.3"
