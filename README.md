@@ -30,10 +30,10 @@ run `cargo build --release --bin hd-tui`.
 gif generated using [VHS](https://github.com/charmbracelet/vhs) (`vhs .github/tui.tape`).
 
 # Compile for ARM 🛠️
-This project is intended to run on a raspberryPi. The script `arm_comp.sh` serve to compile and build a `.deb` package for raspbian. Only ubuntu is supported as of now.
+This project is intended to run on a raspberryPi. The script `arm_comp.sh` serves to cross-compile and build a `.deb` package for raspbian from ubuntu. This is highly unstable, it is recommended (if possible) to build directly on a raspberryPI.
 
 # APIs 🌐
-* [openweathermap](https://home.openweathermap.org/) For weather information
+* [open-meteo](https://open-meteo.com/) For weather information
 * [openexchangerate](https://openexchangerates.org/) For currency conversion
 * [sl.se](https://sl.se/) (through [trafiklab.se](https://www.trafiklab.se/)) For real-time transports information in Stockholm
 
@@ -41,7 +41,6 @@ This project is intended to run on a raspberryPi. The script `arm_comp.sh` serve
 
 In order to configure the application, the following environment variables need to be set:
 ```bash
-export OWM_API_KEY=<Your api key for openweathermap>
 export OER_API_KEY=<Your api key for openexchangerate>
 export REDIS_HOST=<The host of the redis server>
 export REDIS_PORT=<The port of the redis server>
@@ -51,8 +50,8 @@ Additionally, the following environment variables can be set to configure the lo
 
 Latitude and longitude of the point to watch the weather for
 ```bash
-export OWM_LAT=<latitude of the point>
-export OWM_LON=<longitude of the point>
+export WEATHER_LAT=<latitude of the point>
+export WEATHER_LON=<longitude of the point>
 ```
 
 Currency conversion, from and to (Use the currency codes)
@@ -67,3 +66,11 @@ export SL_PLACE_BUS_STOPS=<stop 1>,<stop 2>,...
 ```
 
 > ⚠️ Sometimes multiple stops are available for the same name. All the matches will be displayed.
+
+# Future ideas 💡
+* [ ] TUI for managing currently existing bus stops (removing, search for new ones, ...) as finding the stop IDs is tedious
+* [ ] Implementation of new panels (e.g. music playing with librespot, ...)
+* [ ] Integration with calendar APIs to show upcoming events and reminders
+* [ ] Notifications for important updates (e.g., severe weather alerts, significant currency changes)
+* [ ] Historical data tracking for weather and currency to show trends over time
+* [ ] Multi-language support for the interface and notifications
