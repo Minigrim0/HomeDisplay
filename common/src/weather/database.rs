@@ -56,8 +56,14 @@ pub async fn fetch_current_weather() -> Result<WeatherInfo, String> {
                 }
             },
             Err(error) => {
-                error!("Could not deserialize the weather: {}", error);
-                Err(format!("An error occured while deserializing the weather: {}", error.to_string()))
+                error!("Could not deserialize the weather: {}. Fetchin from API", error);
+                match WeatherInfo::api_get().await {
+                    Ok(weather) => {
+                        store_weather(&weather)?;
+                        Ok(weather)
+                    },
+                    Err(error) => Err(error)
+                }
             }
         },
         Err(err) => {  // If the key does not exist, fetch the data from the API

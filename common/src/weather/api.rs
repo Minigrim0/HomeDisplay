@@ -1,65 +1,48 @@
 /// Implements the logic for fetching weather data from the OpenWeatherMap API
 use reqwest::Url;
 use std::env::var;
-use log::{info, warn};
+use log::error;
 use async_trait::async_trait;
 
 use crate::traits::Api;
 use crate::models::weather::WeatherInfo;
 
+const DEFAULT_LATITUDE: f64 = 59.0;
+const DEFFAULT_LONGITUDE: f64 = 17.0;
+
 #[async_trait]
 impl Api<WeatherInfo> for WeatherInfo {
     async fn api_get() -> Result<WeatherInfo, String> {
-        let default_lat = 59.0;
-        let default_lon = 17.0;
 
-        let api_key = match var("OWM_API_KEY") {
-            Ok(k) => k,
-            Err(_) => return Err("OWM_API_KEY is required to run this application".to_string())
-        };
-
-        let latitude: f64 = match var("OWM_LAT") {
-            Ok(str_lat) => match str_lat.parse::<f64>() {
-                Ok(latitude) => latitude,
-                Err(error) => {
-                    warn!("Could not convert latitude value to f64, using default (Err: {})", error.to_string());
-                    default_lat
-                }
-            },
-            Err(_) => {
-                info!("Using default latitude value 59.0 (Err: Missing OWM_LAT)");
-                default_lat
-            }
-        };
-    
-        let longitude: f64 = match var("OWM_LON") {
-            Ok(str_lon) => match str_lon.parse::<f64>() {
-                Ok(longitude) => longitude,
-                Err(error) => {
-                    warn!("Could not convert longitude value to f64, using default (Err: {})", error.to_string());
-                    default_lon
-                }
-            },
-            Err(_) => {
-                info!("Using default latitude value 17.0 (Err: Missing OWM_LON)");
-                default_lon
-            }
-        };
-
-        let url: Url = match Url::parse(
-            &*format!(
-                "https://api.openweathermap.org/data/2.5/weather?lat={}&lon={}&units=metric&appid={}",
-                latitude, longitude, api_key
+        let latitude: f64 = var("WEATHER_LAT")
+            .map_err(|e| e.to_string())
+            .and_then(|v| v.parse::<f64>()
+                .map_err(|e| {
+                    error!("Unable to convert `WEATHER_LAT` to float: {}", e.to_string());
+                    e.to_string()
+                })
             )
-        ) {
-            Ok(url) => url,
-            Err(err) => return Err(format!("Could not parse URL: {}", err))
-        };
+            .unwrap_or(DEFAULT_LATITUDE);
 
-        let result = match reqwest::get(url).await {
-            Ok(resp) => resp,
-            Err(err) => return Err(format!("Unable to fetch weather information {}", err.to_string()))
-        };
+        let longitude: f64 = var("WEATHER_LON")
+            .map_err(|e| e.to_string())
+            .and_then(|v| v.parse::<f64>()
+                .map_err(|e| {
+                    error!("Unable to convert `WEATHER_LON` to float: {}", e.to_string());
+                    e.to_string()
+                })
+            )
+            .unwrap_or(DEFFAULT_LONGITUDE);
+
+        let url = Url::parse(
+            format!(
+                "https://api.open-meteo.com/v1/forecast?latitude={}&longitude={}&current=temperature_2m,relative_humidity_2m,apparent_temperature,rain,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,apparent_temperature,precipitation,rain,snowfall,wind_speed_10m,wind_direction_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,sunrise,sunset,daylight_duration,uv_index_max&timezone=Europe%2FBerlin",
+                latitude, longitude
+            ).as_str()
+        ).map_err(|err| format!("Could not parse URL: {}", err))?;
+
+        let result = reqwest::get(url).await
+            .map_err(|err| format!("Unable to fetch weather information {}", err.to_string()))?;
 
         match result.status() {
             reqwest::StatusCode::OK => {
@@ -68,7 +51,7 @@ impl Api<WeatherInfo> for WeatherInfo {
                     Err(err) => Err(format!("Error while parsing the weather data: {}", err.to_string()))
                 }
             },
-            reqwest::StatusCode::UNAUTHORIZED => Err(format!("Openweather map API key is invalid")),
+            reqwest::StatusCode::UNAUTHORIZED => Err(format!("Unauthorized, maybe too much requests have been done for the day ?")),
             _ => Err("Uh oh! Something unexpected happened.".to_string()),
         }
     }
