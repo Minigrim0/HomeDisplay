@@ -4,20 +4,15 @@ use redis::Commands;
 
 
 pub fn get_redis_connection() -> Result<redis::Connection, String> {
-    let client = match redis::Client::open(
+    let client = redis::Client::open(
         format!("redis://{}:{}/",
-            match std::env::var("REDIS_HOST") {Ok(host) => host, Err(_) => return Err("REDIS_HOST variable is not set".to_string())},
-            match std::env::var("REDIS_PORT") {Ok(port) => port, Err(_) => return Err("REDIS_PORT variable is not set".to_string())},
+            std::env::var("REDIS_HOST").map_err(|_| "REDIS_HOST variable is not set".to_string())?,
+            std::env::var("REDIS_PORT").map_err(|_| "REDIS_PORT variable is not set".to_string())?,
         ))
-    {
-            Ok(client) => client,
-            Err(_) => return Err("Could not connect to redis.\nIs the database running at the given host & port ?".to_string())
-    };
+        .map_err(|e| format!("Could not connect to redis.\nIs the database running at the given host & port ?\nError: {}", e))?;
 
-    match client.get_connection() {
-        Ok(connection) => Ok(connection),
-        Err(error) => Err(format!("Could not connect to redis: {}", error))
-    }
+    client.get_connection()
+        .map_err(|error| format!("Could not connect to redis: {}", error))
 }
 
 pub async fn get_redis_key(key: String) -> Result<String, String> {
