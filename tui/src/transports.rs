@@ -3,12 +3,11 @@ use std::time::{Duration, SystemTime};
 
 use ratatui::{
     buffer::Buffer,
-    layout::{Alignment, Rect},
+    layout::Rect,
     style::Stylize,
     symbols::border,
     text::{Line, Text},
     widgets::{
-        block::{Position, Title},
         Block, Borders, Paragraph, Widget,
     },
 };
@@ -64,7 +63,7 @@ impl Default for TransportComponent {
 
 impl Widget for &TransportComponent {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let last_refreshed = Title::from(Line::from(
+        let last_refreshed = Line::from(
             match SystemTime::now().duration_since(self.last_refresh) {
                 Ok(duration) => {
                     let seconds = duration.as_secs();
@@ -76,15 +75,11 @@ impl Widget for &TransportComponent {
                 }
                 Err(e) => format!("Err: {}", e.to_string()),
             },
-        ));
+        );
 
         let weather_block = Block::new()
             .borders(Borders::LEFT)
-            .title(
-                last_refreshed
-                    .alignment(Alignment::Center)
-                    .position(Position::Bottom),
-            )
+            .title_bottom(last_refreshed.centered())
             .border_set(border::THICK);
 
         let counter_text: Text = if let Some(e) = &self.departures.error {

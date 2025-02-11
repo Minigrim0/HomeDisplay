@@ -1,14 +1,13 @@
-use chrono::prelude::{DateTime, Local, Timelike};
+use chrono::prelude::{Local, Timelike};
 use std::time::{Duration, SystemTime};
 
 use ratatui::{
     buffer::Buffer,
-    layout::{Alignment, Rect},
+    layout::Rect,
     style::Stylize,
     symbols::border,
     text::{Line, Text},
     widgets::{
-        block::{Position, Title},
         Block, Borders, Paragraph, Widget,
     },
 };
@@ -23,6 +22,7 @@ pub struct WeatherComponent {
     pub weather: Result<WeatherInfo, String>,
     pub cooldown: Duration,
     pub current_forecast_day: u8,
+    pub last_forecast_change: SystemTime,
 }
 
 impl WeatherComponent {
@@ -41,6 +41,7 @@ impl Default for WeatherComponent {
             weather: Err("No weather was fetched yet".to_string()),
             cooldown: Duration::from_secs(30 * 60),
             current_forecast_day: 0,
+            last_forecast_change: SystemTime::now(),
         }
     }
 }
@@ -79,6 +80,13 @@ impl Widget for &WeatherComponent {
                 };
                 let sunset = {
                     format!("{:02}:{:02}",  sun_info.1.hour(),  sun_info.1.minute())
+                };
+                let daytime = {
+                    let daytime = sun_info.2 as i32;
+                    let hours = daytime / 3600;
+                    let minutes = (daytime - hours * 3600) / 60;
+                    let seconds = daytime % 60;
+                    format!("{:02}h {:02}m {:02}s", hours, minutes, seconds)
                 };
 
                 let separator = "-".repeat((0.66 * area.width as f32) as usize);
@@ -142,10 +150,36 @@ impl Widget for &WeatherComponent {
                     Line::from(""),
                     Line::from(separator.clone()).centered(),
                     Line::from("Forecast".bold()).centered(),
+                    Line::from(format!("{:6} Min | Max |  UV  | F Min | F Max", "Date")).centered(),
+                    Line::from(match forecast.get(self.current_forecast_day as usize) {
+                        Some(f) => format!(
+                            "{:6} {:3.0} | {:3.0} | {:1.2} |  {:3.0}  |  {:3.0}",
+                            f.time.format("%a %d"),
+                            f.temperature_2m_min,
+                            f.temperature_2m_max,
+                            f.uv_index_max,
+                            f.apparent_temperature_min,
+                            f.apparent_temperature_max
+                        ),
+                        None => "No forecast available".to_string(),
+                    }).centered(),
+                    Line::from(match forecast.get((self.current_forecast_day as usize + 1) % 7) {
+                        Some(f) => format!(
+                            "{:6} {:3.0} | {:3.0} | {:1.2} |  {:3.0}  |  {:3.0}",
+                            f.time.format("%a %d"),
+                            f.temperature_2m_min,
+                            f.temperature_2m_max,
+                            f.uv_index_max,
+                            f.apparent_temperature_min,
+                            f.apparent_temperature_max
+                        ),
+                        None => "No forecast available".to_string(),
+                    }).centered(),
                     Line::from(separator.clone()).centered(),
                     Line::from("🌕 Day time ☀️".bold()).centered(),
                     Line::from(""),
                     Line::from(format!("🌅 {} 🌄 {}", sunrise, sunset)).centered(),
+                    Line::from(format!("({})", daytime)).centered(),
                 ])
             }
             Err(e) => {

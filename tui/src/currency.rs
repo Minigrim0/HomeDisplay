@@ -3,11 +3,10 @@ use std::time::{Duration, SystemTime};
 
 use ratatui::{
     buffer::Buffer,
-    layout::{Alignment, Rect},
+    layout::Rect,
     style::Stylize,
     text::{Line, Text},
     widgets::{
-        block::{Position, Title},
         Block, Paragraph, Widget,
     },
 };
@@ -44,7 +43,7 @@ impl CurrencyComponent {
 
 impl Widget for &CurrencyComponent {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let last_refreshed = Title::from(Line::from(
+        let last_refreshed = Line::from(
             match SystemTime::now().duration_since(self.last_refresh) {
                 Ok(duration) => {
                     let minutes = duration.as_secs() / 60;
@@ -56,13 +55,10 @@ impl Widget for &CurrencyComponent {
                 }
                 Err(e) => format!("Err: {}", e.to_string()),
             },
-        ));
-
-        let currency_block = Block::new().title(
-            last_refreshed
-                .alignment(Alignment::Center)
-                .position(Position::Bottom),
         );
+
+        let currency_block = Block::new()
+            .title_bottom(last_refreshed.centered());
 
         let currency_text: Text = match &self.conversion {
             Ok(conversion) => {
