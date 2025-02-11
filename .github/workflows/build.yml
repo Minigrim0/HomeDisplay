@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     permissions: write-all
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
 
@@ -18,28 +18,42 @@ jobs:
           image_additional_mb: 10240
           optimize_image: false
           commands: |
-            # Rust complains (rightly) that $HOME doesn't match eid home
             export HOME=/root
-            # Workaround to CI worker being stuck on Updating crates.io index
             export CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
-            # Install setup prerequisites
             apt-get update -y --allow-releaseinfo-change
             apt-get upgrade -y
-            # Install build tools and tauri requirements
-            apt-get install curl gcc-aarch64-linux-gnu libwebkit2gtk-4.0-dev build-essential wget libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libc-dev libc6 libssl-dev -y
+            apt-get install curl gcc-aarch64-linux-gnu build-essential wget libc-dev libc6 libssl-dev -y
             curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal
             . "$HOME/.cargo/env"
-            # Build the TUI application
             cargo build --release --bin hd-tui
-            # Install wasm32 target and tauri-cli
-            rustup target add wasm32-unknown-unknown
-            cargo install tauri-cli trunk
-            # Build the application
-            cargo tauri build --config '{"package": {"version": "${{ github.event.release.tag_name }}"}}'
 
-      - name: Upload Release Asset
+      - name: Upload TUI Release Asset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run:
           gh release upload ${{ github.event.release.tag_name }} ${{ github.workspace }}/target/release/hd-tui
+
+      - uses: pguyot/arm-runner-action@v2.6.5
+        with:
+          base_image: dietpi:rpi_armv8_bullseye
+          cpu: cortex-a53
+          bind_mount_repository: true
+          image_additional_mb: 10240
+          optimize_image: false
+          commands: |
+            export HOME=/root
+            export CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
+            apt-get update -y --allow-releaseinfo-change
+            apt-get upgrade -y
+            apt-get install curl gcc-aarch64-linux-gnu libwebkit2gtk-4.0-dev build-essential wget libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libc-dev libc6 libssl-dev -y
+            curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal
+            . "$HOME/.cargo/env"
+            rustup target add wasm32-unknown-unknown
+            cargo install tauri-cli trunk
+            cargo tauri build --config '{"package": {"version": "${{ github.event.release.tag_name }}"}}'
+
+      - name: Upload Tauri Release Asset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run:
           gh release upload ${{ github.event.release.tag_name }} ${{ github.workspace }}/target/release/bundle/deb/home-display*.deb
