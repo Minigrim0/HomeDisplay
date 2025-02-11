@@ -5,7 +5,7 @@ use std::time::{Duration, SystemTime};
 
 use ratatui::{
     crossterm::event::{self, poll, Event, KeyCode, KeyEvent, KeyEventKind},
-    layout::{Constraint, Layout, Rect},
+    layout::{Constraint, Layout},
     Frame,
 };
 
@@ -46,35 +46,19 @@ impl App {
     }
 
     fn render_frame(&self, frame: &mut Frame) {
-        let chunks = Layout::horizontal([
-            Constraint::Ratio(1, 3); 3
-        ])
-        .split(frame.area());
+        let chunks = Layout::horizontal([Constraint::Ratio(1, 3); 3])
+            .split(frame.area());
 
-        let middle_split = Layout::vertical([
-            Constraint::Ratio(4, 5),
-            Constraint::Ratio(1, 5),
-        ])
-        .split(chunks[1]);
+        let middle_split = Layout::vertical([Constraint::Ratio(4, 5), Constraint::Ratio(1, 5)])
+            .split(chunks[1]);
 
-        frame.render_widget(
-            &self.weather,
-            chunks[0],
-        );
-        frame.render_widget(
-            &self.datetime,
-            middle_split[0],
-        );
-        frame.render_widget(
-            &self.currency,
-            middle_split[1],
-        );
-        frame.render_widget(
-            &self.transports,
-            chunks[2],
-        );
+        frame.render_widget(&self.weather, chunks[0]);
+        frame.render_widget(&self.datetime, middle_split[0]);
+        frame.render_widget(&self.currency, middle_split[1]);
+        frame.render_widget(&self.transports, chunks[2]);
     }
 
+    /// Updates the state of the application every frame
     fn update_state(&mut self) -> io::Result<()> {
         match SystemTime::now().duration_since(self.weather.last_refresh) {
             Ok(duration) => {
@@ -101,6 +85,18 @@ impl App {
                 }
             }
             Err(e) => self.transports.departures.error = Some(e.to_string()),
+        }
+
+        match SystemTime::now().duration_since(self.weather.last_forecast_change) {
+            Ok(duration) => {
+                if duration.as_secs() > 5 {
+                    self.weather.current_forecast_day = (self.weather.current_forecast_day + 1) % 7;
+                    self.weather.last_forecast_change = SystemTime::now();
+                }
+            },
+            Err(e) => {
+                eprintln!("Error: {}", e.to_string());
+            }
         }
 
         Ok(())
