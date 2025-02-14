@@ -11,6 +11,7 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph, Widget},
 };
 use log::error;
+use chrono::Utc;
 
 #[derive(Debug, Default)]
 /// This component displays local time as well as optional offseted timezones
@@ -71,9 +72,10 @@ impl DateTimeComponent {
             .borders(Borders::BOTTOM)
             .border_set(border::THICK);
 
-        let current_day: String = offseted_timezone.format("%A").to_string();
-        let current_date: String = offseted_timezone.format("%d/%m/%Y").to_string();
-        let current_time: String = offseted_timezone.format("%H:%M").to_string();
+        let today = Utc::now().with_timezone(&offseted_timezone);
+        let current_day: String = today.format("%A").to_string();
+        let current_date: String = today.format("%d/%m/%Y").to_string();
+        let current_time: String = today.format("%H:%M").to_string();
 
         let mut lines: Vec<Line> = Vec::new();
         let datetime_text = Text::from(vec![
