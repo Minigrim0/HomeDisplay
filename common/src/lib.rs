@@ -1,6 +1,8 @@
 pub mod models;
 pub mod traits;
 
+pub mod settings;
+
 #[cfg(feature = "network")]
 pub mod database;
 #[cfg(feature = "network")]

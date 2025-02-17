@@ -2,12 +2,13 @@ extern crate redis;
 use log::info;
 use redis::Commands;
 
+use crate::settings;
 
-pub fn get_redis_connection() -> Result<redis::Connection, String> {
+pub fn get_redis_connection(redis_settings: &settings::Redis) -> Result<redis::Connection, String> {
     let client = redis::Client::open(
         format!("redis://{}:{}/",
-            std::env::var("REDIS_HOST").map_err(|_| "REDIS_HOST variable is not set".to_string())?,
-            std::env::var("REDIS_PORT").map_err(|_| "REDIS_PORT variable is not set".to_string())?,
+            redis_settings.host,
+            redis_settings.port,
         ))
         .map_err(|e| format!("Could not connect to redis.\nIs the database running at the given host & port ?\nError: {}", e))?;
 
@@ -15,9 +16,9 @@ pub fn get_redis_connection() -> Result<redis::Connection, String> {
         .map_err(|error| format!("Could not connect to redis: {}", error))
 }
 
-pub async fn get_redis_key(key: String) -> Result<String, String> {
+pub async fn get_redis_key(key: String, redis_settings: &settings::Redis) -> Result<String, String> {
     info!("Fetching data from redis with key: {}", key);
-    let mut connection = get_redis_connection()?;
+    let mut connection = get_redis_connection(redis_settings)?;
 
     match connection.get::<String, Option<String>>(key) {
         Err(error) => {
@@ -32,8 +33,8 @@ pub async fn get_redis_key(key: String) -> Result<String, String> {
     }
 }
 
-pub async fn scan_iter(pattern: String) -> Result<Vec<String>, String> {
-    let mut connection = get_redis_connection()?;
+pub async fn scan_iter(pattern: String, redis_settings: &settings::Redis) -> Result<Vec<String>, String> {
+    let mut connection = get_redis_connection(redis_settings)?;
 
     let values: Vec<String>;
     match connection.scan_match(pattern) {
