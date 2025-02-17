@@ -17,3 +17,4 @@ chrono = "0.4.38"
 simplelog = "0.12.2"
 clap = { version = "4.5.13", features = ["derive"] }
 log = "0.4.22"
+serde = { version = "1.0.217", features = ["derive"] }

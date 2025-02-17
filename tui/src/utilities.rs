@@ -8,8 +8,9 @@ use crate::weather::WeatherComponent;
 use common::currency::database::fetch_current_conversion;
 use common::transports::database::{get_departures, get_sites};
 use common::weather::database::fetch_current_weather;
+use common::settings;
 
-pub fn refresh_weather() -> WeatherComponent {
+pub fn refresh_weather(weather_settings: settings::Weather, redis_data: &settings::Redis) -> WeatherComponent {
     let rt = match tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
@@ -25,13 +26,13 @@ pub fn refresh_weather() -> WeatherComponent {
         }
     };
 
-    match rt.block_on(fetch_current_weather()) {
+    match rt.block_on(fetch_current_weather(weather_settings, redis_data)) {
         Ok(weather) => WeatherComponent::new(Ok(weather)),
         Err(e) => WeatherComponent::new(Err(e.to_string())),
     }
 }
 
-pub fn refresh_conversion() -> CurrencyComponent {
+pub fn refresh_conversion(currency_settings: settings::Currency, redis_data: &settings::Redis) -> CurrencyComponent {
     let rt = match tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
@@ -47,13 +48,13 @@ pub fn refresh_conversion() -> CurrencyComponent {
         }
     };
 
-    match rt.block_on(fetch_current_conversion()) {
+    match rt.block_on(fetch_current_conversion(currency_settings, redis_data)) {
         Ok(currency) => CurrencyComponent::new(Ok(currency)),
         Err(e) => CurrencyComponent::new(Err(e.to_string())),
     }
 }
 
-pub fn refresh_sites(component: &mut TransportComponent) {
+pub fn refresh_sites(component: &mut TransportComponent, stops: Vec<settings::BusStop>, redis_data: &settings::Redis) {
     let rt = match tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
@@ -72,7 +73,7 @@ pub fn refresh_sites(component: &mut TransportComponent) {
     component.departures.error = None;
     component.departures.site_errors.clear();
 
-    let sites = match rt.block_on(get_sites()) {
+    let sites = match rt.block_on(get_sites(stops, redis_data)) {
         Ok(currency) => currency,
         Err(e) => {
             component.departures.error =
@@ -82,7 +83,7 @@ pub fn refresh_sites(component: &mut TransportComponent) {
     };
 
     for site in sites.iter() {
-        let departures = match rt.block_on(get_departures(site.id.clone())) {
+        let departures = match rt.block_on(get_departures(site.id.clone(), redis_data)) {
             Ok(departures) => departures,
             Err(e) => {
                 component
