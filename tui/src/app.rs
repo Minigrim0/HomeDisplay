@@ -9,6 +9,8 @@ use ratatui::{
     Frame,
 };
 
+use common::settings::Settings;
+
 use crate::currency::CurrencyComponent;
 use crate::datetime::DateTimeComponent;
 use crate::transports::TransportComponent;
@@ -20,6 +22,7 @@ use crate::weather::WeatherComponent;
 // Application state
 pub struct App {
     pub exit: bool,
+    pub settings: Settings,
     pub weather: WeatherComponent,
     pub datetime: DateTimeComponent,
     pub currency: CurrencyComponent,
@@ -27,6 +30,19 @@ pub struct App {
 }
 
 impl App {
+    pub fn with_settings(mut self, settings_file: &str) -> Self {
+        let settings = Settings::load_from_file(settings_file).unwrap_or_else(|e| {
+            log::error!("Unable to load settings from file: {}. Using default value", e);
+            Settings::default()
+        });
+        self.settings = settings;
+        for timezone in self.settings.timezones.iter() {
+            self.datetime.push_timezone(timezone.clone());
+        }
+
+        self
+    }
+
     /// runs the application's main loop until the user quits
     pub fn run(&mut self, terminal: &mut Tui) -> io::Result<()> {
         self.force_complete_refresh(); // Initial refresh
@@ -63,7 +79,7 @@ impl App {
         match SystemTime::now().duration_since(self.weather.last_refresh) {
             Ok(duration) => {
                 if duration > self.weather.cooldown {
-                    self.weather = utilities::refresh_weather();
+                    self.weather = utilities::refresh_weather(self.settings.weather.clone(), &self.settings.redis);
                 }
             }
             Err(e) => self.weather = WeatherComponent::new(Err(e.to_string())),
@@ -72,7 +88,7 @@ impl App {
         match SystemTime::now().duration_since(self.currency.last_refresh) {
             Ok(duration) => {
                 if duration > self.currency.cooldown {
-                    self.currency = utilities::refresh_conversion();
+                    self.currency = utilities::refresh_conversion(self.settings.currency.clone(), &self.settings.redis);
                 }
             }
             Err(e) => self.currency = CurrencyComponent::new(Err(e.to_string())),
@@ -81,7 +97,7 @@ impl App {
         match SystemTime::now().duration_since(self.transports.last_refresh) {
             Ok(duration) => {
                 if duration > self.transports.cooldown {
-                    utilities::refresh_sites(&mut self.transports);
+                    utilities::refresh_sites(&mut self.transports, self.settings.transports.clone(), &self.settings.redis);
                 }
             }
             Err(e) => self.transports.departures.error = Some(e.to_string()),
@@ -95,7 +111,18 @@ impl App {
                 }
             },
             Err(e) => {
-                eprintln!("Error: {}", e.to_string());
+                error!("Error: {}", e.to_string());
+            }
+        }
+
+        match SystemTime::now().duration_since(self.datetime.last_offset_change) {
+            Ok(duration) => {
+                if duration.as_secs() > 5 {
+                    self.datetime.advance_timezone();
+                }
+            },
+            Err(e) => {
+                error!("Error: {}", e.to_string());
             }
         }
 
@@ -103,9 +130,9 @@ impl App {
     }
 
     fn force_complete_refresh(&mut self) {
-        self.weather = utilities::refresh_weather();
-        self.currency = utilities::refresh_conversion();
-        utilities::refresh_sites(&mut self.transports);
+        self.weather = utilities::refresh_weather(self.settings.weather.clone(), &self.settings.redis);
+        self.currency = utilities::refresh_conversion(self.settings.currency.clone(), &self.settings.redis);
+        utilities::refresh_sites(&mut self.transports, self.settings.transports.clone(), &self.settings.redis);
     }
 
     fn handle_key_event(&mut self, key_event: KeyEvent) {
