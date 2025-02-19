@@ -2,6 +2,7 @@ use chrono::prelude::Local;
 use chrono::{FixedOffset, Utc};
 use common::settings::TimezoneData;
 use log::error;
+use ratatui::text::ToLine;
 use std::time::SystemTime;
 
 use ratatui::prelude::*;
@@ -58,15 +59,21 @@ impl DateTimeComponent {
         let current_date: String = today.format("%d/%m/%Y").to_string();
         let current_time: String = today.format("%H:%M").to_string();
 
-        let datetime_text = Text::from(vec![
+        let mut datetime_text = vec![];
+
+        let empty_lines = (frame.height as i32 - 3) / 2;
+        for _ in 0..empty_lines {
+            datetime_text.push(Line::from(""));
+        }
+
+        datetime_text.extend(vec![
             Line::from(current_day).bold().centered(),
             Line::from(current_date).blue().bold().centered(),
             Line::from(current_time).bold().centered()
         ]);
+        let datetime_text = Text::from(datetime_text);
 
-        let datetime_block = Block::new()
-            .borders(Borders::BOTTOM)
-            .border_set(border::THICK);
+        let datetime_block = Block::new();
 
         Paragraph::new(datetime_text)
             .block(datetime_block)
@@ -104,12 +111,20 @@ impl DateTimeComponent {
         let current_date: String = today.format("%d/%m/%Y").to_string();
         let current_time: String = today.format("%H:%M").to_string();
 
-        let datetime_text = Text::from(vec![
-            Line::from(timezone_name.as_str()).bold().centered(),
+        let mut datetime_text = vec![];
+
+        let empty_lines = (frame.height as i32 - 4) / 2;
+        for _ in 0..empty_lines {
+            datetime_text.push(Line::from(""));
+        }
+
+        datetime_text.extend(vec![
+            timezone_name.to_line().bold().underlined().centered(),
             Line::from(current_day).bold().centered(),
             Line::from(current_date).blue().bold().centered(),
             Line::from(current_time).bold().centered()
         ]);
+        let datetime_text = Text::from(datetime_text);
 
         Paragraph::new(datetime_text)
             .block(datetime_block)
