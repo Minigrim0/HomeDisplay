@@ -49,7 +49,7 @@ impl App {
         while !self.exit {
             if let Ok(size) = terminal.size() {
                 if size.height < 5 || size.width < 30 {
-                    error!("{}x{} is not big enough", size.width, size.height);
+                    log::error!("{}x{} is not big enough", size.width, size.height);
                     return Err(io::Error::new(ErrorKind::Other, "Terminal not big enough"));
                 }
             }
