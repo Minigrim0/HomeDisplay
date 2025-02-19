@@ -1968,6 +1968,7 @@ dependencies = [
 name = "hd-tauri"
 version = "0.3.0"
 dependencies = [
+ "clap",
  "colored",
  "common",
  "env_logger",
