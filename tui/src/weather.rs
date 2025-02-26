@@ -151,6 +151,7 @@ impl Widget for &WeatherComponent {
                     Line::from(separator.clone()).centered(),
                     Line::from("Forecast".bold()).centered(),
                     Line::from(format!("{:6} Min | Max |  UV  | F Min | F Max", "Date")).centered(),
+                    Line::from("-----------|-----|------|-------|------").centered(),
                     Line::from(match forecast.get(self.current_forecast_day as usize) {
                         Some(f) => format!(
                             "{:6} {:3.0} | {:3.0} | {:1.2} |  {:3.0}  |  {:3.0}",
@@ -164,6 +165,18 @@ impl Widget for &WeatherComponent {
                         None => "No forecast available".to_string(),
                     }).centered(),
                     Line::from(match forecast.get((self.current_forecast_day as usize + 1) % 7) {
+                        Some(f) => format!(
+                            "{:6} {:3.0} | {:3.0} | {:1.2} |  {:3.0}  |  {:3.0}",
+                            f.time.format("%a %d"),
+                            f.temperature_2m_min,
+                            f.temperature_2m_max,
+                            f.uv_index_max,
+                            f.apparent_temperature_min,
+                            f.apparent_temperature_max
+                        ),
+                        None => "No forecast available".to_string(),
+                    }).centered(),
+                    Line::from(match forecast.get((self.current_forecast_day as usize + 2) % 7) {
                         Some(f) => format!(
                             "{:6} {:3.0} | {:3.0} | {:1.2} |  {:3.0}  |  {:3.0}",
                             f.time.format("%a %d"),
