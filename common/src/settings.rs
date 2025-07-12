@@ -86,11 +86,12 @@ pub struct Currency {
 /// This is used to display the bus departures
 pub struct BusStop {
     pub name: String,
+    pub preffered_lines: Option<Vec<i32>>,
     pub site_id: Option<String>,
 }
 
 fn default_redis_host() -> String {
-    println!("Using default redis value");
+    info!("Using default redis value");
     "localhost".to_string()
 }
 
