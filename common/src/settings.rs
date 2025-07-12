@@ -39,12 +39,18 @@ fn default_lon() -> f64 {
     17.0
 }
 
+fn default_display_amount() -> i32 {
+    5
+}
+
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct Weather {
     #[serde(default = "default_lat")]
     pub latitude: f64,
     #[serde(default = "default_lon")]
-    pub longitude: f64
+    pub longitude: f64,
+    #[serde(default = "default_display_amount")]
+    pub display_amount: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
@@ -80,16 +86,17 @@ pub struct Currency {
 /// This is used to display the bus departures
 pub struct BusStop {
     pub name: String,
+    pub preffered_lines: Option<Vec<i32>>,
     pub site_id: Option<String>,
 }
 
 fn default_redis_host() -> String {
-    println!("Using default redis value");
+    info!("Using default redis value");
     "localhost".to_string()
 }
 
 fn default_redis_port() -> u16 {
-    1873
+    6379
 }
 
 fn default_redis_db() -> u8 {
