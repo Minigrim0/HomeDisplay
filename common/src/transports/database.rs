@@ -68,7 +68,7 @@ fn store_departures(new_departures: &Vec<Departure>, site_id: &str, redis_data: 
 
 /// Fetches the sites from the API, filters them using the transports settings
 /// and stores them in the database
-pub async fn fetch_new_sites(stops: Vec<settings::BusStop>, redis_data: &settings::Redis) -> Result<Vec<Site>, String> {
+pub async fn fetch_new_sites(stops: &Vec<settings::BusStop>, redis_data: &settings::Redis) -> Result<Vec<Site>, String> {
     info!("Filtering on:");
     for stop in stops.iter() {
         info!(" - {}", stop.name);
@@ -95,7 +95,7 @@ pub async fn fetch_new_sites(stops: Vec<settings::BusStop>, redis_data: &setting
 
 /// Returns the sites from the database. The list is filtered using elements in the
 /// stops vector from the settings
-pub async fn get_sites(stops: Vec<settings::BusStop>, redis_data: &settings::Redis) -> Result<Vec<Site>, String> {
+pub async fn get_sites(stops: &Vec<settings::BusStop>, redis_data: &settings::Redis) -> Result<Vec<Site>, String> {
     // Get all sites, filter them and return the list
     let mut site_list: Vec<Site> = vec![];
 

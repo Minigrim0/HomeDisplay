@@ -1,4 +1,4 @@
-use log::trace;
+use log::{trace, info};
 use std::time::SystemTime;
 
 use crate::currency::CurrencyComponent;
@@ -7,6 +7,7 @@ use crate::weather::WeatherComponent;
 
 use common::currency::database::fetch_current_conversion;
 use common::transports::database::{get_departures, get_sites};
+use common::models::transports::Departure;
 use common::weather::database::fetch_current_weather;
 use common::settings;
 
@@ -73,8 +74,8 @@ pub fn refresh_sites(component: &mut TransportComponent, stops: Vec<settings::Bu
     component.departures.error = None;
     component.departures.site_errors.clear();
 
-    let sites = match rt.block_on(get_sites(stops, redis_data)) {
-        Ok(currency) => currency,
+    let sites = match rt.block_on(get_sites(&stops, redis_data)) {
+        Ok(site) => site,
         Err(e) => {
             component.departures.error =
                 Some(format!("Unable to fetch the sites {}", e.to_string()));
@@ -82,9 +83,23 @@ pub fn refresh_sites(component: &mut TransportComponent, stops: Vec<settings::Bu
         }
     };
 
+    let mut empty_sites = vec![];
+
     for site in sites.iter() {
-        let departures = match rt.block_on(get_departures(site.id.clone(), redis_data)) {
-            Ok(departures) => departures,
+        let mut filter_on = vec![];
+        info!("Refreshing site {} ({})", site.id, site.name);
+        if let Some(stop_index) = stops.iter().position(|stop| stop.name == site.name) {
+            info!("Finding out whether to filter lines for stop: {}", &stops[stop_index].name);
+            if let Some(lines) = &stops[stop_index].preffered_lines {
+                filter_on = lines.iter().map(|el| *el).collect();
+                info!("Filtering stop {} on lines {:?}", stops[stop_index].name, filter_on);
+            }
+        }
+
+        let departures: Vec<Departure> = match rt.block_on(get_departures(site.id.clone(), redis_data)) {
+            Ok(departures) => departures.into_iter().filter(
+                |s| (filter_on.is_empty() || filter_on.contains(&s.line.id))
+            ).collect(),
             Err(e) => {
                 component
                     .departures
@@ -94,13 +109,17 @@ pub fn refresh_sites(component: &mut TransportComponent, stops: Vec<settings::Bu
             }
         };
 
+        if departures.is_empty() {
+            empty_sites.push(site.id.clone());
+        }
+
         component
             .departures
             .departures
             .insert(site.id.clone(), departures);
     }
 
-    component.departures.sites = sites;
+    component.departures.sites = sites.into_iter().filter(|s| !empty_sites.contains(&s.id)).collect();
     component.last_refresh = SystemTime::now();
 }
 
