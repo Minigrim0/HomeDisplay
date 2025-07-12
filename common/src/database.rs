@@ -1,5 +1,5 @@
 extern crate redis;
-use log::info;
+use log::trace;
 use redis::Commands;
 
 use crate::settings;
@@ -17,7 +17,7 @@ pub fn get_redis_connection(redis_settings: &settings::Redis) -> Result<redis::C
 }
 
 pub async fn get_redis_key(key: String, redis_settings: &settings::Redis) -> Result<String, String> {
-    info!("Fetching data from redis with key: {}", key);
+    trace!("Fetching data from redis with key: {}", key);
     let mut connection = get_redis_connection(redis_settings)?;
 
     match connection.get::<String, Option<String>>(key) {
