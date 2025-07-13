@@ -1,6 +1,8 @@
 use chrono::prelude::Local;
 use chrono::{FixedOffset, Utc};
 use homedisplay::settings::TimezoneData;
+
+use crate::error::{TuiError, TuiResult};
 use log::error;
 use ratatui::text::ToLine;
 use std::time::SystemTime;
@@ -82,20 +84,26 @@ impl DateTimeComponent {
     }
 
     /// Renders the currently displayed timezone. Different timezones are stored in the `timezones` field.
-    fn render_current_timezone(&self, frame: Rect, buf: &mut Buffer) -> Result<(), String> {
+    fn render_current_timezone(&self, frame: Rect, buf: &mut Buffer) -> TuiResult<()> {
         let (offseted_timezone, timezone_name) = if let Some(timezone) = self.timezones.get(self.currently_displayed_offset as usize) {
             match timezone.direction.to_uppercase().as_str() {
                 "E" => {
                     (FixedOffset::east_opt((timezone.offset * 3600.0) as i32)
-                        .ok_or(format!("Unable to build a valid offset with {} seconds !", timezone.offset))?, &timezone.name)
+                        .ok_or(TuiError::timezone_invalid(
+                            format!("Unable to build valid east offset with {} seconds", timezone.offset)
+                        ))?, &timezone.name)
                 }
                 "W" => {
                     (FixedOffset::west_opt(timezone.offset as i32)
-                        .ok_or(format!("Unable to build a valid offset with {} seconds !", timezone.offset))?, &timezone.name)
+                        .ok_or(TuiError::timezone_invalid(
+                            format!("Unable to build valid west offset with {} seconds", timezone.offset)
+                        ))?, &timezone.name)
                 }
                 other => {
                     error!("Incorrect timezone offset: {other}");
-                    Err(format!("Incorrect timezone offset `{other}`. Expected one of 'E', 'W'"))?
+                    return Err(TuiError::timezone_invalid(
+                        format!("Incorrect timezone direction '{}'. Expected 'E' or 'W'", other)
+                    ));
                 }
             }
         } else {
