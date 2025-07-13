@@ -13,6 +13,10 @@ use homedisplay::weather::database::fetch_current_weather;
 use homedisplay::settings;
 
 /// Refreshes weather data by creating a tokio runtime and fetching from the database
+/// 
+/// **DEPRECATED**: This function creates a blocking runtime on each call.
+/// Use `AsyncDataManager` instead for better performance and non-blocking operation.
+#[deprecated(since = "0.6.0", note = "Use AsyncDataManager for non-blocking async operations")]
 pub fn refresh_weather(weather_settings: settings::Weather, redis_data: &settings::Redis) -> WeatherComponent {
     let rt = match tokio::runtime::Builder::new_current_thread()
         .enable_all()
@@ -35,6 +39,10 @@ pub fn refresh_weather(weather_settings: settings::Weather, redis_data: &setting
 }
 
 /// Refreshes currency conversion data by creating a tokio runtime and fetching from the database
+/// 
+/// **DEPRECATED**: This function creates a blocking runtime on each call.
+/// Use `AsyncDataManager` instead for better performance and non-blocking operation.
+#[deprecated(since = "0.6.0", note = "Use AsyncDataManager for non-blocking async operations")]
 pub fn refresh_conversion(currency_settings: settings::Currency, redis_data: &settings::Redis) -> CurrencyComponent {
     let rt = match tokio::runtime::Builder::new_current_thread()
         .enable_all()
@@ -57,6 +65,10 @@ pub fn refresh_conversion(currency_settings: settings::Currency, redis_data: &se
 }
 
 /// Refreshes transport departure sites by creating a tokio runtime and fetching from the database
+/// 
+/// **DEPRECATED**: This function creates a blocking runtime on each call.
+/// Use `AsyncDataManager` instead for better performance and non-blocking operation.
+#[deprecated(since = "0.6.0", note = "Use AsyncDataManager for non-blocking async operations")]
 pub fn refresh_sites(component: &mut TransportComponent, stops: Vec<settings::BusStop>, redis_data: &settings::Redis) {
     let rt = match tokio::runtime::Builder::new_current_thread()
         .enable_all()

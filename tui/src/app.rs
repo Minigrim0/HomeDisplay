@@ -30,6 +30,7 @@ pub struct App {
     pub currency: CurrencyComponent,          // Currency conversion component
     pub transports: TransportComponent,       // Transport departure component
     pub data_receiver: Option<mpsc::Receiver<DataUpdate>>, // Channel for async data updates
+    pub async_manager: Option<AsyncDataManager>,           // Async data manager (kept alive)
 }
 
 impl Default for App {
@@ -42,6 +43,7 @@ impl Default for App {
             currency: CurrencyComponent::default(),
             transports: TransportComponent::default(),
             data_receiver: None,
+            async_manager: None,
         }
     }
 }
@@ -68,9 +70,8 @@ impl App {
         let receiver = manager.start_background_tasks(self.settings.clone(), config)?;
         self.data_receiver = Some(receiver);
         
-        // Store the manager in a way that it won't be dropped
-        // For now, we'll let it live until the app exits
-        std::mem::forget(manager);
+        // Store the manager to keep it alive
+        self.async_manager = Some(manager);
         
         Ok(())
     }

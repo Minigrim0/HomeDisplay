@@ -275,3 +275,11 @@ impl AsyncDataManager {
         info!("Async data manager shut down");
     }
 }
+
+impl std::fmt::Debug for AsyncDataManager {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AsyncDataManager")
+            .field("shutdown_tx", &self.shutdown_tx.is_some())
+            .finish_non_exhaustive()
+    }
+}
