@@ -1,6 +1,5 @@
 use std::io::{self, stdout, Stdout};
 
-use crate::error::{TuiError, TuiResult};
 use ratatui::{
     backend::CrosstermBackend,
     crossterm::{

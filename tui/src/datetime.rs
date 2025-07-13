@@ -89,19 +89,19 @@ impl DateTimeComponent {
             match timezone.direction.to_uppercase().as_str() {
                 "E" => {
                     (FixedOffset::east_opt((timezone.offset * 3600.0) as i32)
-                        .ok_or(TuiError::timezone_invalid(
+                        .ok_or(TuiError::TimezoneInvalid(
                             format!("Unable to build valid east offset with {} seconds", timezone.offset)
                         ))?, &timezone.name)
                 }
                 "W" => {
                     (FixedOffset::west_opt(timezone.offset as i32)
-                        .ok_or(TuiError::timezone_invalid(
+                        .ok_or(TuiError::TimezoneInvalid(
                             format!("Unable to build valid west offset with {} seconds", timezone.offset)
                         ))?, &timezone.name)
                 }
                 other => {
                     error!("Incorrect timezone offset: {other}");
-                    return Err(TuiError::timezone_invalid(
+                    return Err(TuiError::TimezoneInvalid(
                         format!("Incorrect timezone direction '{}'. Expected 'E' or 'W'", other)
                     ));
                 }

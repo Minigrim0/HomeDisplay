@@ -12,7 +12,7 @@ use ratatui::{
 use homedisplay::settings::Settings;
 
 use crate::currency::CurrencyComponent;
-use crate::error::{TuiError, TuiResult};
+use crate::error::TuiError;
 use crate::datetime::DateTimeComponent;
 use crate::transports::TransportComponent;
 use crate::tui::Tui;
@@ -52,7 +52,7 @@ impl App {
             if let Ok(size) = terminal.size() {
                 if size.height < 5 || size.width < 30 {
                     log::error!("{}x{} is not big enough", size.width, size.height);
-                    let error = TuiError::terminal_too_small(size.width, size.height);
+                    let error = TuiError::TerminalTooSmall { width: size.width, height: size.height };
                     return Err(io::Error::new(ErrorKind::Other, error.to_string()));
                 }
             }

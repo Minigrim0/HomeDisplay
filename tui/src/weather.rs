@@ -14,7 +14,7 @@ use ratatui::{
 
 use homedisplay::models::weather::WeatherInfo;
 
-use crate::error::{TuiError, TuiResult};
+use crate::error::TuiError;
 use crate::utilities::fit_into;
 
 #[derive(Debug)]

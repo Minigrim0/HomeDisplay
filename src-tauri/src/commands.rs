@@ -21,7 +21,7 @@ pub async fn get_currency(settings: State<'_, Mutex<Settings>>) -> Result<Conver
         (settings.currency.clone(), settings.redis.clone())
     };
 
-    common::currency::database::fetch_current_conversion(currency_settings, &redis_data).await
+    homedisplay::currency::database::fetch_current_conversion(currency_settings, &redis_data).await
 }
 
 #[tauri::command]
@@ -36,7 +36,7 @@ pub async fn get_sites(settings: State<'_, Mutex<Settings>>) -> Result<Vec<Site>
         };
         (settings.transports.clone(), settings.redis.clone())
     };
-    common::transports::database::get_sites(&stops, &redis_data).await
+    homedisplay::transports::database::get_sites(&stops, &redis_data).await
 }
 
 #[tauri::command]
@@ -51,7 +51,7 @@ pub async fn get_departures(settings: State<'_, Mutex<Settings>>, site_id: Strin
         };
         settings.redis.clone()
     };
-    common::transports::database::get_departures(site_id, &redis_data).await
+    homedisplay::transports::database::get_departures(site_id, &redis_data).await
 }
 
 #[tauri::command]
@@ -65,5 +65,5 @@ pub async fn get_weather(settings: State<'_, Mutex<Settings>>) -> Result<Weather
         (settings.weather.clone(), settings.redis.clone())
     };
 
-    common::weather::database::fetch_current_weather(weather_settings, &redis_data).await
+    homedisplay::weather::database::fetch_current_weather(weather_settings, &redis_data).await
 }

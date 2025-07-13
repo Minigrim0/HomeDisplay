@@ -2,7 +2,7 @@ use log::{trace, info};
 use std::time::SystemTime;
 
 use crate::currency::CurrencyComponent;
-use crate::error::{TuiError, TuiResult};
+use crate::error::TuiError;
 use crate::transports::TransportComponent;
 use crate::weather::WeatherComponent;
 
@@ -21,7 +21,7 @@ pub fn refresh_weather(weather_settings: settings::Weather, redis_data: &setting
         Ok(rt) => rt,
         Err(e) => {
             let mut weather: WeatherComponent = WeatherComponent::default();
-            weather.weather = Err(TuiError::tokio_runtime_failed(
+            weather.weather = Err(TuiError::TokioRuntime(
                 format!("Unable to build tokio runtime for weather: {}", e)
             ));
             return weather;
@@ -30,7 +30,7 @@ pub fn refresh_weather(weather_settings: settings::Weather, redis_data: &setting
 
     match rt.block_on(fetch_current_weather(weather_settings, redis_data)) {
         Ok(weather) => WeatherComponent::new(Ok(weather)),
-        Err(e) => WeatherComponent::new(Err(TuiError::weather_fetch_failed(e))),
+        Err(e) => WeatherComponent::new(Err(TuiError::WeatherFetch(e))),
     }
 }
 
@@ -43,7 +43,7 @@ pub fn refresh_conversion(currency_settings: settings::Currency, redis_data: &se
         Ok(rt) => rt,
         Err(e) => {
             let mut conversion: CurrencyComponent = CurrencyComponent::default();
-            conversion.conversion = Err(TuiError::tokio_runtime_failed(
+            conversion.conversion = Err(TuiError::TokioRuntime(
                 format!("Unable to build tokio runtime for currency: {}", e)
             ));
             return conversion;
@@ -52,7 +52,7 @@ pub fn refresh_conversion(currency_settings: settings::Currency, redis_data: &se
 
     match rt.block_on(fetch_current_conversion(currency_settings, redis_data)) {
         Ok(currency) => CurrencyComponent::new(Ok(currency)),
-        Err(e) => CurrencyComponent::new(Err(TuiError::currency_fetch_failed(e))),
+        Err(e) => CurrencyComponent::new(Err(TuiError::CurrencyFetch(e))),
     }
 }
 
@@ -64,7 +64,7 @@ pub fn refresh_sites(component: &mut TransportComponent, stops: Vec<settings::Bu
     {
         Ok(rt) => rt,
         Err(e) => {
-            component.departures.error = Some(TuiError::tokio_runtime_failed(
+            component.departures.error = Some(TuiError::TokioRuntime(
                 format!("Unable to build tokio runtime for departures: {}", e)
             ));
             return;
@@ -78,7 +78,7 @@ pub fn refresh_sites(component: &mut TransportComponent, stops: Vec<settings::Bu
     let sites = match rt.block_on(get_sites(&stops, redis_data)) {
         Ok(site) => site,
         Err(e) => {
-            component.departures.error = Some(TuiError::transport_fetch_failed(
+            component.departures.error = Some(TuiError::TransportFetch(
                 format!("Unable to fetch sites: {}", e)
             ));
             return;
@@ -106,7 +106,7 @@ pub fn refresh_sites(component: &mut TransportComponent, stops: Vec<settings::Bu
                 component
                     .departures
                     .site_errors
-                    .insert(site.id.clone(), TuiError::transport_fetch_failed(
+                    .insert(site.id.clone(), TuiError::TransportFetch(
                         format!("Unable to fetch departures for site {}: {}", site.id, e)
                     ));
                 continue;
