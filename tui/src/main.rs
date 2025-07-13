@@ -1,16 +1,18 @@
-use std::io;
 use std::default::Default;
 use std::fs::File;
+use std::io;
 
-use log;
 use clap::Parser;
+use log;
 use simplelog::{CombinedLogger, Config, LevelFilter, WriteLogger};
 
-use common::settings::Settings;
+use homedisplay::settings::Settings;
 
 mod app;
+mod async_manager;
 mod currency;
 mod datetime;
+mod error;
 mod transports;
 mod tui;
 mod utilities;
@@ -18,10 +20,13 @@ mod weather;
 
 use app::App;
 
-
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
-#[clap(author="Minigrim0", version, about="The TUI version of home-display")]
+#[clap(
+    author = "Minigrim0",
+    version,
+    about = "The TUI version of home-display"
+)]
 struct Args {
     #[arg(short = 'f', long, default_value = "homedisplay.log")]
     /// File to log to. Defaults to homedisplay.log
@@ -63,29 +68,44 @@ fn main() -> io::Result<()> {
         }
     };
 
-    CombinedLogger::init(
-        vec![
-            WriteLogger::new(log_level, Config::default(), File::create(log_file).unwrap()),
-        ]
-    ).unwrap();
+    CombinedLogger::init(vec![WriteLogger::new(
+        log_level,
+        Config::default(),
+        File::create(log_file).unwrap(),
+    )])
+    .unwrap();
 
     if args.dump_settings || args.dump_default_settings {
         let settings = if args.dump_default_settings {
             Settings::default()
         } else {
-            Settings::load_from_file(&args.settings).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?
+            Settings::load_from_file(&args.settings)
+                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?
         };
 
-        let settings_str = settings.to_string().map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+        let settings_str = settings
+            .to_string()
+            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
         std::fs::write(&args.dump_file, settings_str).unwrap();
         log::info!("Settings dumped to {}", args.dump_file);
         return Ok(());
     }
 
+    log::info!("Starting HomeDisplay TUI application");
+    log::info!("Loading settings from: {}", args.settings);
+
     let mut terminal = tui::init()?;
     let app_result = App::default()
         .with_settings(&args.settings)
         .run(&mut terminal);
+
+    log::info!("Application finished, restoring terminal");
     tui::restore()?;
+
+    match &app_result {
+        Ok(_) => log::info!("HomeDisplay TUI application exited successfully"),
+        Err(e) => log::error!("HomeDisplay TUI application exited with error: {}", e),
+    }
+
     app_result
 }

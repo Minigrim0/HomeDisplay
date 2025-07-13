@@ -2,22 +2,23 @@ use chrono::{DateTime, Local};
 use futures::stream::{Stream, StreamExt};
 use std::time::Duration;
 use wasm_bindgen_futures::spawn_local;
-use yew::Callback;
 use yew::platform::time::{interval, sleep};
+use yew::Callback;
 
 use crate::glue::get_currency;
-use common::models::currency::Conversion;
+use homedisplay::models::currency::Conversion;
 
 const ONE_SEC: Duration = Duration::from_secs(1);
 const CONVERSION_REFRESH_INTERVAL: Duration = Duration::from_secs(3600);
 
 pub fn refresh_currency(callback: Callback<Result<Conversion, String>>) {
-    spawn_local( async move {
+    spawn_local(async move {
         match get_currency().await {
             Ok(response) => {
-                let currency: Result<Conversion, String> = serde_wasm_bindgen::from_value(response).map_err(|e| e.to_string());
+                let currency: Result<Conversion, String> =
+                    serde_wasm_bindgen::from_value(response).map_err(|e| e.to_string());
                 callback.emit(currency);
-            },
+            }
             Err(e) => {
                 callback.emit(serde_wasm_bindgen::from_value(e).map_err(|e| e.to_string()));
             }

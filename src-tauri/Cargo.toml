@@ -1,11 +1,11 @@
 [package]
 name = "hd-tauri"
-version = "0.3.0"
 description = "A tauri application for home-display"
-authors = ["Minigrim0"]
-license = "MIT"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
 repository = "https://github.com/Minigrim0/HomeDisplay"
-edition = "2021"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -17,7 +17,7 @@ tokio = { version = "1.29.1", features = ["full"] }
 log = "0.4.21"
 env_logger = "0.11.3"
 clap = { version = "4.5.13", features = ["derive"] }
-common = { path = "../common", features = ["network"] }
+homedisplay = { path = "../homedisplay", features = ["network"] }
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]  # DO NOT REMOVE!!

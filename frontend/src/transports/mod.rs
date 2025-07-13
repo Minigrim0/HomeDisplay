@@ -1,2 +1,2 @@
-mod services;
 pub mod components;
+mod services;

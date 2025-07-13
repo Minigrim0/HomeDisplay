@@ -1,23 +1,23 @@
-use yew::{html, Component, Context, Html, Properties};
 use chrono::prelude::{Local, Timelike};
 use futures::StreamExt;
+use yew::{html, Component, Context, Html, Properties};
 
-use common::models::weather::WeatherInfo;
+use homedisplay::models::weather::WeatherInfo;
 
-use super::services::{start_weather_job, refresh_weather, stream_time};
+use super::services::{refresh_weather, start_weather_job, stream_time};
 
 pub struct WeatherComponent {
     weather: Option<WeatherInfo>,
     loading: bool,
     error: Option<String>,
     last_update: i64,
-    time_since_last_update: i64
+    time_since_last_update: i64,
 }
 
 pub enum Msg {
     ClockUpdate,
     LoadWeatherData,
-    WeatherDataReceived(Result<WeatherInfo, String>)
+    WeatherDataReceived(Result<WeatherInfo, String>),
 }
 
 #[derive(Properties, PartialEq)]
@@ -36,14 +36,15 @@ impl Component for WeatherComponent {
         start_weather_job(weather_ready_cb);
 
         let time_stream = stream_time();
-        ctx.link().send_stream(time_stream.map(|_| Msg::ClockUpdate));
+        ctx.link()
+            .send_stream(time_stream.map(|_| Msg::ClockUpdate));
 
         Self {
             weather: None,
             loading: false,
             error: None,
             last_update: Local::now().timestamp(),
-            time_since_last_update: 0
+            time_since_last_update: 0,
         }
     }
 
@@ -65,13 +66,13 @@ impl Component for WeatherComponent {
                 self.weather = None;
                 self.last_update = Local::now().timestamp();
                 true
-            },
+            }
             Msg::WeatherDataReceived(result) => {
                 match result {
                     Ok(value) => {
                         self.error = None;
                         self.weather = Some(value);
-                    },
+                    }
                     Err(e) => {
                         self.error = Some(e);
                     }
@@ -104,10 +105,18 @@ impl Component for WeatherComponent {
 
             let temperature = format!("{:.0}°C", weather.current.temperature_2m);
             let feel = format!("Feel {:.0}°C", weather.current.apparent_temperature);
-            let min = format!("⬇️ {:.0}°C", weather.daily.temperature_2m_min.first().unwrap_or(&-1000.0));
-            let max = format!("⬆️ {:.0}°C", weather.daily.temperature_2m_max.first().unwrap_or(&1000.0));
+            let min = format!(
+                "⬇️ {:.0}°C",
+                weather.daily.temperature_2m_min.first().unwrap_or(&-1000.0)
+            );
+            let max = format!(
+                "⬆️ {:.0}°C",
+                weather.daily.temperature_2m_max.first().unwrap_or(&1000.0)
+            );
 
-            let (icon_code, weather_description) = weather.daily.get_weather_info()
+            let (icon_code, weather_description) = weather
+                .daily
+                .get_weather_info()
                 .map_err(|e| errors.push(format!("Unable to get weather info: {}", e.to_string())))
                 .unwrap_or(("01d".to_string(), "error".to_string()));
 
@@ -117,7 +126,11 @@ impl Component for WeatherComponent {
                 Ok((sr, ss, dt)) => (sr, ss, dt),
                 Err(e) => {
                     errors.push(format!("Unable to get sun data: {}", e.to_string()));
-                    (Local::now().fixed_offset(), Local::now().fixed_offset(), 0.0)
+                    (
+                        Local::now().fixed_offset(),
+                        Local::now().fixed_offset(),
+                        0.0,
+                    )
                 }
             };
 
@@ -129,12 +142,8 @@ impl Component for WeatherComponent {
                     let seconds = daytime % 60;
                     format!("{:02}h {:02}m {:02}s", hours, minutes, seconds)
                 };
-                let sunrise = {
-                    format!("{:02}:{:02}", sunrise.hour(), sunrise.minute())
-                };
-                let sunset = {
-                    format!("{:02}:{:02}", sunset.hour(), sunset.minute())
-                };
+                let sunrise = { format!("{:02}:{:02}", sunrise.hour(), sunrise.minute()) };
+                let sunset = { format!("{:02}:{:02}", sunset.hour(), sunset.minute()) };
                 format!("🌅 {} 🌄 {} ({})", sunrise, sunset, daytime)
             };
 
@@ -147,8 +156,16 @@ impl Component for WeatherComponent {
             };
 
             let last_upd = {
-                let plural = if (self.time_since_last_update / 60) > 1 { "s" } else { "" };
-                format!("{} minute{} ago", (self.time_since_last_update / 60) as i32, plural)
+                let plural = if (self.time_since_last_update / 60) > 1 {
+                    "s"
+                } else {
+                    ""
+                };
+                format!(
+                    "{} minute{} ago",
+                    (self.time_since_last_update / 60) as i32,
+                    plural
+                )
             };
 
             html! {

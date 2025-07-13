@@ -1,17 +1,22 @@
-use common::models::transports::Departure;
-use yew::{html, Html, Component, Context, Properties};
+use homedisplay::models::transports::Departure;
+use yew::{html, Component, Context, Html, Properties};
 
 pub struct Timing;
 
 #[derive(Properties)]
 pub struct Props {
-    pub departures: Vec<Departure>
+    pub departures: Vec<Departure>,
 }
 
 // Implement partial equality for Props
 impl PartialEq for Props {
     fn eq(&self, other: &Self) -> bool {
-        self.departures.len() == other.departures.len() && self.departures.iter().zip(other.departures.iter()).all(|(a, b)| a.display == b.display)
+        self.departures.len() == other.departures.len()
+            && self
+                .departures
+                .iter()
+                .zip(other.departures.iter())
+                .all(|(a, b)| a.display == b.display)
     }
 }
 
@@ -38,7 +43,7 @@ impl Component for Timing {
         html! {
             { transport_modes.iter().map(|mode| {
                 let departures = &ctx.props().departures.iter().filter(|dep| &dep.line.transport_mode == mode).collect::<Vec<&Departure>>();
-                
+
                 html! {
                     <div>
                         <h4>{ mode }</h4>

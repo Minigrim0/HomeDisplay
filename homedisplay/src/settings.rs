@@ -1,9 +1,8 @@
+use log::info;
+use serde::{Deserialize, Serialize};
 /// This file contains all the settings structures and functions
 /// used to configure the application.
-
 use std::fs;
-use serde::{Serialize, Deserialize};
-use log::info;
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 /// The settings structure
@@ -26,7 +25,7 @@ impl Settings {
     }
 
     /// Dumps this settings structure into a toml string
-    pub fn to_string(&self)  -> Result<String, String> {
+    pub fn to_string(&self) -> Result<String, String> {
         toml::to_string(&self).map_err(|e| e.to_string())
     }
 }
@@ -58,9 +57,9 @@ pub struct Weather {
 /// This is used to display the time in different timezones
 /// Local time is always displayed
 pub struct TimezoneData {
-    pub direction: String,  // E or W
-    pub offset: f32,  // In hours
-    pub name: String,  // A City or a Country (e.g. Paris, France)
+    pub direction: String, // E or W
+    pub offset: f32,       // In hours
+    pub name: String,      // A City or a Country (e.g. Paris, France)
 }
 
 fn default_from_currency() -> String {

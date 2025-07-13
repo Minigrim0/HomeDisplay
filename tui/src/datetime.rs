@@ -1,6 +1,8 @@
 use chrono::prelude::Local;
 use chrono::{FixedOffset, Utc};
-use common::settings::TimezoneData;
+use homedisplay::settings::TimezoneData;
+
+use crate::error::{TuiError, TuiResult};
 use log::error;
 use ratatui::text::ToLine;
 use std::time::SystemTime;
@@ -18,7 +20,7 @@ use ratatui::{
 #[derive(Debug)]
 /// This component displays local time as well as optional offseted timezones
 pub struct DateTimeComponent {
-    pub timezones: Vec<TimezoneData>,  // Direction (E, W), offset (in hours) and Name
+    pub timezones: Vec<TimezoneData>, // Direction (E, W), offset (in hours) and Name
     pub currently_displayed_offset: u32,
     pub last_offset_change: SystemTime,
 }
@@ -28,7 +30,7 @@ impl Default for DateTimeComponent {
         Self {
             timezones: Vec::new(),
             currently_displayed_offset: 0,
-            last_offset_change: SystemTime::now()
+            last_offset_change: SystemTime::now(),
         }
     }
 }
@@ -47,7 +49,8 @@ impl DateTimeComponent {
     }
 
     pub fn advance_timezone(&mut self) {
-        self.currently_displayed_offset = (self.currently_displayed_offset + 1) % self.timezones.len() as u32;
+        self.currently_displayed_offset =
+            (self.currently_displayed_offset + 1) % self.timezones.len() as u32;
         self.last_offset_change = SystemTime::now();
     }
 }
@@ -69,7 +72,7 @@ impl DateTimeComponent {
         datetime_text.extend(vec![
             Line::from(current_day).bold().centered(),
             Line::from(current_date).blue().bold().centered(),
-            Line::from(current_time).bold().centered()
+            Line::from(current_time).bold().centered(),
         ]);
         let datetime_text = Text::from(datetime_text);
 
@@ -82,26 +85,40 @@ impl DateTimeComponent {
     }
 
     /// Renders the currently displayed timezone. Different timezones are stored in the `timezones` field.
-    fn render_current_timezone(&self, frame: Rect, buf: &mut Buffer) -> Result<(), String> {
-        let (offseted_timezone, timezone_name) = if let Some(timezone) = self.timezones.get(self.currently_displayed_offset as usize) {
-            match timezone.direction.to_uppercase().as_str() {
-                "E" => {
-                    (FixedOffset::east_opt((timezone.offset * 3600.0) as i32)
-                        .ok_or(format!("Unable to build a valid offset with {} seconds !", timezone.offset))?, &timezone.name)
+    fn render_current_timezone(&self, frame: Rect, buf: &mut Buffer) -> TuiResult<()> {
+        let (offseted_timezone, timezone_name) =
+            if let Some(timezone) = self.timezones.get(self.currently_displayed_offset as usize) {
+                match timezone.direction.to_uppercase().as_str() {
+                    "E" => (
+                        FixedOffset::east_opt((timezone.offset * 3600.0) as i32).ok_or(
+                            TuiError::TimezoneInvalid(format!(
+                                "Unable to build valid east offset with {} seconds",
+                                timezone.offset
+                            )),
+                        )?,
+                        &timezone.name,
+                    ),
+                    "W" => (
+                        FixedOffset::west_opt(timezone.offset as i32).ok_or(
+                            TuiError::TimezoneInvalid(format!(
+                                "Unable to build valid west offset with {} seconds",
+                                timezone.offset
+                            )),
+                        )?,
+                        &timezone.name,
+                    ),
+                    other => {
+                        error!("Incorrect timezone offset: {other}");
+                        return Err(TuiError::TimezoneInvalid(format!(
+                            "Incorrect timezone direction '{}'. Expected 'E' or 'W'",
+                            other
+                        )));
+                    }
                 }
-                "W" => {
-                    (FixedOffset::west_opt(timezone.offset as i32)
-                        .ok_or(format!("Unable to build a valid offset with {} seconds !", timezone.offset))?, &timezone.name)
-                }
-                other => {
-                    error!("Incorrect timezone offset: {other}");
-                    Err(format!("Incorrect timezone offset `{other}`. Expected one of 'E', 'W'"))?
-                }
-            }
-        } else {
-            // No timezone to display
-            return Ok(());
-        };
+            } else {
+                // No timezone to display
+                return Ok(());
+            };
         let datetime_block = Block::new()
             .borders(Borders::BOTTOM)
             .border_set(border::THICK);
@@ -122,7 +139,7 @@ impl DateTimeComponent {
             timezone_name.to_line().bold().underlined().centered(),
             Line::from(current_day).bold().centered(),
             Line::from(current_date).blue().bold().centered(),
-            Line::from(current_time).bold().centered()
+            Line::from(current_time).bold().centered(),
         ]);
         let datetime_text = Text::from(datetime_text);
 
@@ -139,11 +156,8 @@ impl Widget for &DateTimeComponent {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let splitted = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Ratio(1, 2); 2
-        ])
+            .constraints([Constraint::Ratio(1, 2); 2])
             .split(area);
-
 
         self.render_local(splitted[0], buf);
         if let Err(e) = self.render_current_timezone(splitted[1], buf) {

@@ -1,0 +1,77 @@
+name: x86_64 Release Build
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  release-build-tui:
+    name: Release Build TUI for x86_64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-tui-release-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build TUI
+        run: |
+          cargo build --release --bin hd-tui
+
+      - name: Upload TUI to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ github.event.release.tag_name }} target/release/hd-tui --clobber
+
+  release-build-tauri:
+    name: Release Build Tauri for x86_64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.0-dev build-essential curl wget libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-tauri-release-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install Tauri CLI and Trunk
+        run: |
+          cargo install tauri-cli trunk
+
+      - name: Build Tauri app
+        run: |
+          # Version is already set in tauri.conf.json via workspace inheritance
+          cargo tauri build
+
+      - name: Upload Tauri to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ github.event.release.tag_name }} target/release/bundle/deb/home-display*.deb --clobber
+          if ls target/release/bundle/appimage/*.AppImage 1> /dev/null 2>&1; then
+            gh release upload ${{ github.event.release.tag_name }} target/release/bundle/appimage/*.AppImage --clobber
+          fi

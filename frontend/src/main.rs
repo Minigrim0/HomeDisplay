@@ -1,14 +1,13 @@
 use yew::prelude::*;
 
-mod glue;
-mod weather;
 mod currency;
+mod glue;
 mod transports;
+mod weather;
 
-use weather::component::WeatherComponent;
 use currency::component::CurrencyComponent;
 use transports::components::transport::TransportsComponent;
-
+use weather::component::WeatherComponent;
 
 fn main() {
     yew::Renderer::<App>::new().render();

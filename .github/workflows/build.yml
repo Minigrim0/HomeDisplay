@@ -1,14 +1,16 @@
-name: Raspberry Pi package
+name: Raspberry Pi TUI Build
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   build:
+    name: Build TUI for Raspberry Pi
     permissions: write-all
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: pguyot/arm-runner-action@v2.6.5
         with:
@@ -25,21 +27,16 @@ jobs:
             # Install setup prerequisites
             apt-get update -y --allow-releaseinfo-change
             apt-get upgrade -y
-            # Install build tools and tauri requirements
-            apt-get install curl gcc-aarch64-linux-gnu libwebkit2gtk-4.0-dev build-essential wget libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libc-dev libc6 libssl-dev -y
+            # Install build tools for TUI only
+            apt-get install curl build-essential libssl-dev -y
             curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal
             . "$HOME/.cargo/env"
             # Build the TUI application
             cargo build --release --bin hd-tui
-            # Install wasm32 target and tauri-cli
-            rustup target add wasm32-unknown-unknown
-            cargo install tauri-cli trunk
-            # Build the application
-            cargo tauri build --config '{"package": {"version": "${{ github.event.release.tag_name }}"}}'
 
       - name: Upload Release Asset
+        if: github.event_name == 'release'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run:
+        run: |
           gh release upload ${{ github.event.release.tag_name }} ${{ github.workspace }}/target/release/hd-tui
-          gh release upload ${{ github.event.release.tag_name }} ${{ github.workspace }}/target/release/bundle/deb/home-display*.deb

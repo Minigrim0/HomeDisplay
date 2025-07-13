@@ -3,16 +3,20 @@
 
 use std::sync::Mutex;
 
-use log::error;
 use clap::Parser;
+use homedisplay::settings::Settings;
+use log::error;
 use tauri::{Builder, Manager};
-use common::settings::Settings;
 
 mod commands;
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
-#[clap(author="Minigrim0", version, about="The Tauri version of home-display")]
+#[clap(
+    author = "Minigrim0",
+    version,
+    about = "The Tauri version of home-display"
+)]
 struct Args {
     #[arg(short = 's', long, default_value = "settings.toml")]
     /// Path to the settings file
@@ -33,9 +37,9 @@ fn main() {
 
     Builder::default()
         .setup(|app| {
-              app.manage(Mutex::new(settings));
-              Ok(())
-            })
+            app.manage(Mutex::new(settings));
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             commands::get_currency,
             commands::get_weather,
