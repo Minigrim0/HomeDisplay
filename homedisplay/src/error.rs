@@ -41,12 +41,14 @@ impl From<std::io::Error> for HomeDisplayError {
     }
 }
 
+#[cfg(feature = "network")]
 impl From<redis::RedisError> for HomeDisplayError {
     fn from(err: redis::RedisError) -> Self {
         HomeDisplayError::RedisOperation(err.to_string())
     }
 }
 
+#[cfg(feature = "network")]
 impl From<reqwest::Error> for HomeDisplayError {
     fn from(err: reqwest::Error) -> Self {
         if err.is_timeout() {
@@ -78,12 +80,20 @@ impl From<toml::ser::Error> for HomeDisplayError {
 pub type HomeDisplayResult<T> = Result<T, HomeDisplayError>;
 
 impl HomeDisplayError {
+    /// Returns true if this error type is typically retryable
     pub fn is_retryable(&self) -> bool {
-        matches!(
-            self,
-            HomeDisplayError::RedisConnection(_) |
-            HomeDisplayError::ApiRequest(_) |
-            HomeDisplayError::NetworkTimeout(_)
-        )
+        #[cfg(feature = "network")]
+        {
+            matches!(
+                self,
+                HomeDisplayError::RedisConnection(_) |
+                HomeDisplayError::ApiRequest(_) |
+                HomeDisplayError::NetworkTimeout(_)
+            )
+        }
+        #[cfg(not(feature = "network"))]
+        {
+            false
+        }
     }
 }
