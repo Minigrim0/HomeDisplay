@@ -90,6 +90,7 @@ impl Widget for &CurrencyComponent {
                 Text::from(lines)
             }
             Err(e) => {
+                log::warn!("Currency component displaying error: {}", e);
                 let user_message = e.user_message();
                 let detailed_message = if log::log_enabled!(log::Level::Debug) {
                     e.to_string()

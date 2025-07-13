@@ -84,10 +84,21 @@ fn main() -> io::Result<()> {
         return Ok(());
     }
 
+    log::info!("Starting HomeDisplay TUI application");
+    log::info!("Loading settings from: {}", args.settings);
+    
     let mut terminal = tui::init()?;
     let app_result = App::default()
         .with_settings(&args.settings)
         .run(&mut terminal);
+    
+    log::info!("Application finished, restoring terminal");
     tui::restore()?;
+    
+    match &app_result {
+        Ok(_) => log::info!("HomeDisplay TUI application exited successfully"),
+        Err(e) => log::error!("HomeDisplay TUI application exited with error: {}", e),
+    }
+    
     app_result
 }

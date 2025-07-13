@@ -87,6 +87,7 @@ impl Widget for &TransportComponent {
             .border_set(border::THICK);
 
         let counter_text: Text = if let Some(e) = &self.departures.error {
+            log::warn!("Transport component displaying error: {}", e);
             let user_message = e.user_message();
             let detailed_message = if log::log_enabled!(log::Level::Debug) {
                 e.to_string()

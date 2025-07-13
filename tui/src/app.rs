@@ -186,9 +186,17 @@ impl App {
     /// Handles keyboard input events
     fn handle_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
-            KeyCode::Char('q') => self.exit = true,
-            KeyCode::Char('r') => self.force_complete_refresh(),
-            _ => {}
+            KeyCode::Char('q') => {
+                log::info!("User pressed 'q', exiting application");
+                self.exit = true;
+            },
+            KeyCode::Char('r') => {
+                log::info!("User pressed 'r', triggering refresh (note: now handled by async tasks)");
+                self.force_complete_refresh();
+            },
+            _ => {
+                log::debug!("Unhandled key event: {:?}", key_event.code);
+            }
         }
     }
 

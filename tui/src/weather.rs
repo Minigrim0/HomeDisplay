@@ -199,6 +199,7 @@ impl Widget for &WeatherComponent {
                 ])
             }
             Err(e) => {
+                log::warn!("Weather component displaying error: {}", e);
                 let user_message = e.user_message();
                 let detailed_message = if log::log_enabled!(log::Level::Debug) {
                     e.to_string()
