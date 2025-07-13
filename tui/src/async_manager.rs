@@ -62,7 +62,7 @@ pub struct AsyncDataManager {
 impl AsyncDataManager {
     /// Creates a new async data manager with a single Tokio runtime
     pub fn new() -> TuiResult<Self> {
-        let runtime = tokio::runtime::Builder::new_multi_thread()
+        let runtime = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()
             .map_err(|e| TuiError::TokioRuntime(format!("Failed to create runtime: {}", e)))?;

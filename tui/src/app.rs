@@ -1,6 +1,7 @@
 use log::error;
 use std::default::Default;
 use std::io::{self, ErrorKind};
+use std::sync::mpsc;
 use std::time::{Duration, SystemTime};
 
 use ratatui::{
@@ -11,23 +12,38 @@ use ratatui::{
 
 use homedisplay::settings::Settings;
 
+use crate::async_manager::{AsyncDataManager, DataUpdate, RefreshConfig};
 use crate::currency::CurrencyComponent;
 use crate::error::TuiError;
 use crate::datetime::DateTimeComponent;
-use crate::transports::TransportComponent;
+use crate::transports::{TransportComponent, Departures};
 use crate::tui::Tui;
-use crate::utilities;
 use crate::weather::WeatherComponent;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 /// Main application state containing all UI components
 pub struct App {
-    pub exit: bool,                        // Flag to exit the application
-    pub settings: Settings,                // Application configuration
-    pub weather: WeatherComponent,         // Weather display component
-    pub datetime: DateTimeComponent,       // Date/time display component
-    pub currency: CurrencyComponent,       // Currency conversion component
-    pub transports: TransportComponent,    // Transport departure component
+    pub exit: bool,                           // Flag to exit the application
+    pub settings: Settings,                   // Application configuration
+    pub weather: WeatherComponent,            // Weather display component
+    pub datetime: DateTimeComponent,          // Date/time display component
+    pub currency: CurrencyComponent,          // Currency conversion component
+    pub transports: TransportComponent,       // Transport departure component
+    pub data_receiver: Option<mpsc::Receiver<DataUpdate>>, // Channel for async data updates
+}
+
+impl Default for App {
+    fn default() -> Self {
+        Self {
+            exit: false,
+            settings: Settings::default(),
+            weather: WeatherComponent::default(),
+            datetime: DateTimeComponent::default(),
+            currency: CurrencyComponent::default(),
+            transports: TransportComponent::default(),
+            data_receiver: None,
+        }
+    }
 }
 
 impl App {
@@ -45,9 +61,27 @@ impl App {
         self
     }
 
+    /// Starts the async data manager and begins background data fetching
+    pub fn start_async_manager(&mut self) -> Result<(), TuiError> {
+        let mut manager = AsyncDataManager::new()?;
+        let config = RefreshConfig::default();
+        let receiver = manager.start_background_tasks(self.settings.clone(), config)?;
+        self.data_receiver = Some(receiver);
+        
+        // Store the manager in a way that it won't be dropped
+        // For now, we'll let it live until the app exits
+        std::mem::forget(manager);
+        
+        Ok(())
+    }
+
     /// Runs the application's main loop until the user quits
     pub fn run(&mut self, terminal: &mut Tui) -> io::Result<()> {
-        self.force_complete_refresh(); // Initial refresh
+        // Start async data manager
+        if let Err(e) = self.start_async_manager() {
+            log::error!("Failed to start async data manager: {}", e);
+            return Err(io::Error::new(ErrorKind::Other, e.to_string()));
+        }
         while !self.exit {
             if let Ok(size) = terminal.size() {
                 if size.height < 5 || size.width < 30 {
@@ -78,34 +112,38 @@ impl App {
         frame.render_widget(&self.transports, chunks[2]);
     }
 
+    /// Processes any pending async data updates
+    fn process_async_updates(&mut self) {
+        if let Some(ref receiver) = self.data_receiver {
+            // Process all available updates without blocking
+            while let Ok(update) = receiver.try_recv() {
+                match update {
+                    DataUpdate::Weather(result) => {
+                        self.weather = WeatherComponent::new(result);
+                    }
+                    DataUpdate::Currency(result) => {
+                        self.currency = CurrencyComponent::new(result);
+                    }
+                    DataUpdate::Transport(transport_update) => {
+                        let departures = Departures {
+                            sites: transport_update.sites,
+                            departures: transport_update.departures,
+                            site_errors: transport_update.site_errors,
+                            error: transport_update.error,
+                        };
+                        self.transports = TransportComponent::new(departures);
+                    }
+                }
+            }
+        }
+    }
+
     /// Updates the state of the application every frame
     fn update_state(&mut self) -> io::Result<()> {
-        match SystemTime::now().duration_since(self.weather.last_refresh) {
-            Ok(duration) => {
-                if duration > self.weather.cooldown {
-                    self.weather = utilities::refresh_weather(self.settings.weather.clone(), &self.settings.redis);
-                }
-            }
-            Err(e) => self.weather = WeatherComponent::new(Err(TuiError::SystemTime(e.to_string()))),
-        }
-
-        match SystemTime::now().duration_since(self.currency.last_refresh) {
-            Ok(duration) => {
-                if duration > self.currency.cooldown {
-                    self.currency = utilities::refresh_conversion(self.settings.currency.clone(), &self.settings.redis);
-                }
-            }
-            Err(e) => self.currency = CurrencyComponent::new(Err(TuiError::SystemTime(e.to_string()))),
-        }
-
-        match SystemTime::now().duration_since(self.transports.last_refresh) {
-            Ok(duration) => {
-                if duration > self.transports.cooldown {
-                    utilities::refresh_sites(&mut self.transports, self.settings.transports.clone(), &self.settings.redis);
-                }
-            }
-            Err(e) => self.transports.departures.error = Some(TuiError::SystemTime(e.to_string())),
-        }
+        // Process any new data from async tasks
+        self.process_async_updates();
+        
+        // Handle UI-specific updates (forecast cycling, timezone cycling)
 
         match SystemTime::now().duration_since(self.weather.last_forecast_change) {
             Ok(duration) => {
@@ -134,10 +172,11 @@ impl App {
     }
 
     /// Forces a complete refresh of all data components
+    /// Force refresh is no longer needed as async tasks handle data fetching
     fn force_complete_refresh(&mut self) {
-        self.weather = utilities::refresh_weather(self.settings.weather.clone(), &self.settings.redis);
-        self.currency = utilities::refresh_conversion(self.settings.currency.clone(), &self.settings.redis);
-        utilities::refresh_sites(&mut self.transports, self.settings.transports.clone(), &self.settings.redis);
+        // Data fetching is now handled by background async tasks
+        // This method is kept for compatibility but does nothing
+        log::info!("Async data manager will handle data fetching");
     }
 
     /// Handles keyboard input events
