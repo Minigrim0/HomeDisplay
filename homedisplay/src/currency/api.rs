@@ -57,14 +57,11 @@ impl Api<CurrencySettings, Conversion> for Conversion {
             )
             .as_str(),
         )
-        .map_err(|err| format!("Could not parse URL: {}", err))?;
+        .map_err(|err| format!("Could not parse URL: {err}"))?;
 
-        let result = reqwest::get(url).await.map_err(|error| {
-            format!(
-                "Error while fetching OpenExchangeRates API: {}",
-                error.to_string()
-            )
-        })?;
+        let result = reqwest::get(url)
+            .await
+            .map_err(|error| format!("Error while fetching OpenExchangeRates API: {error}",))?;
 
         match result.status() {
             reqwest::StatusCode::OK => match result.json::<APIResponse>().await {
@@ -73,10 +70,7 @@ impl Api<CurrencySettings, Conversion> for Conversion {
                     currency_settings.currency_from,
                     currency_settings.currency_to,
                 )),
-                Err(err) => Err(format!(
-                    "Error while converting Conversion data: {}",
-                    err.to_string()
-                )),
+                Err(err) => Err(format!("Error while converting Conversion data: {err}",)),
             },
             reqwest::StatusCode::UNAUTHORIZED => {
                 Err("Openexchangerates token is invalid".to_string())

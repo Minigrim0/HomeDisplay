@@ -30,8 +30,7 @@ fn store_conversion(conversion: &Conversion, redis_data: &settings::Redis) -> Re
         Ok(serialized) => serialized,
         Err(error) => {
             return Err(format!(
-                "An error occured while serializing the data: {}",
-                error
+                "An error occured while serializing the data: {error}",
             ))
         }
     };
@@ -44,8 +43,7 @@ fn store_conversion(conversion: &Conversion, redis_data: &settings::Redis) -> Re
     ) {
         Ok(_) => Ok(()),
         Err(error) => Err(format!(
-            "Could not save serialized data into redis: {}",
-            error
+            "Could not save serialized data into redis: {error}",
         )),
     }
 }
@@ -83,10 +81,9 @@ pub async fn fetch_current_conversion(
                 }
             }
             Err(error) => {
-                error!("Could not deserialize the conversion: {}", error);
+                error!("Could not deserialize the conversion: {error}");
                 Err(format!(
-                    "An error occured while deserializing the conversion: {}",
-                    error.to_string()
+                    "An error occured while deserializing the conversion: {error}"
                 ))
             }
         },

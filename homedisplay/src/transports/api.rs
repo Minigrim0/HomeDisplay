@@ -24,7 +24,7 @@ impl Api<(), Vec<Site>> for Site {
     async fn api_get(_: ()) -> Result<Vec<Site>, String> {
         let url: Url = match Url::parse("https://transport.integration.sl.se/v1/sites") {
             Ok(url) => url,
-            Err(err) => return Err(format!("Could not parse URL: {}", err)),
+            Err(err) => return Err(format!("Could not parse URL: {err}")),
         };
 
         let client = reqwest::Client::new();
@@ -35,13 +35,13 @@ impl Api<(), Vec<Site>> for Site {
             .await
         {
             Ok(resp) => resp,
-            Err(err) => return Err(format!("Unable to fetch bus Sites, Err: {}", err)),
+            Err(err) => return Err(format!("Unable to fetch bus Sites, Err: {err}")),
         };
 
         let result_status = result.status();
         let result_body = match result.text().await {
             Ok(body) => body,
-            Err(err) => return Err(format!("Unable to fetch bus Sites, Err: {}", err)),
+            Err(err) => return Err(format!("Unable to fetch bus Sites, Err: {err}")),
         };
 
         match result_status {
@@ -58,7 +58,7 @@ impl Api<(), Vec<Site>> for Site {
                             },
                         })
                         .collect()),
-                    Err(e) => Err(format!("Error while fetching bus sites: {}", e.to_string())),
+                    Err(e) => Err(format!("Error while fetching bus sites: {e}")),
                 }
             }
             status => Err(format!(
@@ -77,14 +77,10 @@ struct DepartureAPI {
 impl Api<String, Vec<Departure>> for Departure {
     async fn api_get(site_id: String) -> Result<Vec<Departure>, String> {
         let url: Url = match Url::parse(
-            format!(
-                "https://transport.integration.sl.se/v1/sites/{}/departures",
-                site_id
-            )
-            .as_str(),
+            format!("https://transport.integration.sl.se/v1/sites/{site_id}/departures").as_str(),
         ) {
             Ok(url) => url,
-            Err(err) => return Err(format!("Could not parse URL: {}", err)),
+            Err(err) => return Err(format!("Could not parse URL: {err}")),
         };
 
         let client = reqwest::Client::new();
@@ -95,23 +91,20 @@ impl Api<String, Vec<Departure>> for Departure {
             .await
         {
             Ok(resp) => resp,
-            Err(err) => return Err(format!("Unable to fetch bus Sites, Err: {}", err)),
+            Err(err) => return Err(format!("Unable to fetch bus Sites, Err: {err}")),
         };
 
         let result_status = result.status();
         let result_body = match result.text().await {
             Ok(body) => body,
-            Err(err) => return Err(format!("Unable to fetch bus Sites, Err: {}", err)),
+            Err(err) => return Err(format!("Unable to fetch bus Sites, Err: {err}")),
         };
 
         match result_status {
             reqwest::StatusCode::OK => {
                 match serde_json::from_str::<DepartureAPI>(&result_body.clone()) {
                     Ok(data) => Ok(data.departures),
-                    Err(e) => Err(format!(
-                        "Error while fetching departures: {}",
-                        e.to_string()
-                    )),
+                    Err(e) => Err(format!("Error while fetching departures: {e}")),
                 }
             }
             status => Err(format!(

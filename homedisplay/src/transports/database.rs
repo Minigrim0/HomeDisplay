@@ -39,8 +39,7 @@ fn store_site(site: &Site, redis_data: &settings::Redis) -> Result<(), String> {
         Ok(serialized) => serialized,
         Err(error) => {
             return Err(format!(
-                "An error occured while serializing the data: {}",
-                error
+                "An error occured while serializing the data: {error}",
             ))
         }
     };
@@ -53,8 +52,7 @@ fn store_site(site: &Site, redis_data: &settings::Redis) -> Result<(), String> {
     ) {
         Ok(_) => Ok(()),
         Err(error) => Err(format!(
-            "Could not save serialized data into redis: {}",
-            error
+            "Could not save serialized data into redis: {error}"
         )),
     }
 }
@@ -62,12 +60,12 @@ fn store_site(site: &Site, redis_data: &settings::Redis) -> Result<(), String> {
 /// Stores the departures of a site in the database, wrapped in a DepartureDatabase struct
 /// to store the freshness of the data
 fn store_departures(
-    new_departures: &Vec<Departure>,
+    new_departures: &[Departure],
     site_id: &str,
     redis_data: &settings::Redis,
 ) -> Result<(), String> {
     let departures = DepartureDatabase {
-        departures: new_departures.clone(),
+        departures: new_departures.to_vec(),
         freshness: SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -78,8 +76,7 @@ fn store_departures(
         Ok(serialized) => serialized,
         Err(error) => {
             return Err(format!(
-                "An error occured while serializing the data: {}",
-                error
+                "An error occured while serializing the data: {error}"
             ))
         }
     };
@@ -87,13 +84,12 @@ fn store_departures(
     let mut con: redis::Connection = database::get_redis_connection(redis_data)?;
 
     match con.set::<String, String, redis::Value>(
-        format!("homedisplay:sites:{}:departures", site_id),
+        format!("homedisplay:sites:{site_id}:departures"),
         serialized_departures,
     ) {
         Ok(_) => Ok(()),
         Err(error) => Err(format!(
-            "Could not save serialized data into redis: {}",
-            error
+            "Could not save serialized data into redis: {error}"
         )),
     }
 }
@@ -101,7 +97,7 @@ fn store_departures(
 /// Fetches the sites from the API, filters them using the transports settings
 /// and stores them in the database
 pub async fn fetch_new_sites(
-    stops: &Vec<settings::BusStop>,
+    stops: &[settings::BusStop],
     redis_data: &settings::Redis,
 ) -> Result<Vec<Site>, String> {
     info!("Filtering on:");
@@ -117,7 +113,7 @@ pub async fn fetch_new_sites(
         if stops.is_empty()
             || stops.iter().any(|s| {
                 unidecode(&site.name.to_lowercase()).contains(&unidecode(&s.name.to_lowercase()))
-                    && s.site_id.as_ref().and_then(|id| Some(id == &site.id)) != Some(false)
+                    && s.site_id.as_ref().map(|id| id == &site.id) != Some(false)
             })
         {
             filtered_sites.push(site.clone());
@@ -136,7 +132,7 @@ pub async fn fetch_new_sites(
 /// Returns the sites from the database. The list is filtered using elements in the
 /// stops vector from the settings
 pub async fn get_sites(
-    stops: &Vec<settings::BusStop>,
+    stops: &[settings::BusStop],
     redis_data: &settings::Redis,
 ) -> Result<Vec<Site>, String> {
     // Get all sites, filter them and return the list
@@ -179,14 +175,14 @@ pub async fn get_sites(
                             }
                         }
                         Err(e) => {
-                            warn!("Error while fetching bus sites: {}", e.to_string());
+                            warn!("Error while fetching bus sites: {e}");
                             continue;
                         }
                     }
                 }
                 Ok(site) => site.site,
                 Err(e) => {
-                    warn!("Error while deserializing bus sites: {}", e.to_string());
+                    warn!("Error while deserializing bus sites: {e}");
                     continue;
                 }
             };
@@ -194,7 +190,7 @@ pub async fn get_sites(
             if stops.is_empty()
                 || stops.iter().any(|stop| {
                     unidecode(site_name).contains(&unidecode(&stop.name.to_lowercase()))
-                        && stop.site_id.as_ref().and_then(|id| Some(id == &site.id)) != Some(false)
+                        && stop.site_id.as_ref().map(|id| id == &site.id) != Some(false)
                 })
             {
                 site_list.push(site);
@@ -220,7 +216,7 @@ pub async fn get_departures(
     redis_data: &settings::Redis,
 ) -> Result<Vec<Departure>, String> {
     match database::get_redis_key(
-        format!("homedisplay:sites:{}:departures", site_id),
+        format!("homedisplay:sites:{site_id}:departures"),
         redis_data,
     )
     .await

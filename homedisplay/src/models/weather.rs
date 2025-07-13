@@ -65,7 +65,7 @@ impl DailyWeather {
     fn is_day(&self) -> bool {
         if let Some(sunset) = self.sunset.first() {
             DateTime::parse_from_rfc3339(sunset)
-                .and_then(|dt| Ok(Local::now().fixed_offset().timestamp() - dt.timestamp() < 0))
+                .map(|dt| Local::now().fixed_offset().timestamp() - dt.timestamp() < 0)
                 .unwrap_or(true)
         } else {
             false
@@ -113,7 +113,7 @@ impl DailyWeather {
 
         let sunrise = if let Some(sunrise) = self.sunrise.first() {
             NaiveDateTime::parse_from_str(sunrise, "%Y-%m-%dT%H:%M")
-                .map_err(|e| format!("Unable to parse sunrise from `{}`: {}", sunrise, e))?
+                .map_err(|e| format!("Unable to parse sunrise from `{sunrise}`: {e}"))?
                 .and_local_timezone(local_timezone)
                 .unwrap()
                 .fixed_offset()
@@ -123,7 +123,7 @@ impl DailyWeather {
 
         let sunset = if let Some(sunset) = self.sunset.first() {
             NaiveDateTime::parse_from_str(sunset, "%Y-%m-%dT%H:%M")
-                .map_err(|e| format!("Unable to parse sunset from `{}`: {}", sunrise, e))?
+                .map_err(|e| format!("Unable to parse sunset from `{sunrise}`: {e}"))?
                 .and_local_timezone(local_timezone)
                 .unwrap()
                 .fixed_offset()
@@ -158,7 +158,7 @@ impl DailyWeather {
                     uv_index_max,
                 )| {
                     let time = NaiveDate::parse_from_str(time, "%Y-%m-%d")
-                        .map_err(|e| format!("Unable to parse time from `{}`: {}", time, e))?;
+                        .map_err(|e| format!("Unable to parse time from `{time}`: {e}"))?;
                     Ok(WeatherForecast {
                         time,
                         weather_code: self.get_weather_code(*weather_code)?.0,
@@ -176,10 +176,10 @@ impl DailyWeather {
             .iter()
             .filter_map(|r| r.clone().err())
             .collect::<Vec<String>>();
-        if errors.len() > 0 {
-            Err(errors.join("\n"))
-        } else {
+        if errors.is_empty() {
             Ok(forecast.into_iter().filter_map(|r| r.ok()).collect())
+        } else {
+            Err(errors.join("\n"))
         }
     }
 }

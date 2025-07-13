@@ -30,8 +30,7 @@ fn store_weather(weather: &WeatherInfo, redis_data: &settings::Redis) -> Result<
         Ok(serialized) => serialized,
         Err(error) => {
             return Err(format!(
-                "An error occured while serializing the data: {}",
-                error
+                "An error occured while serializing the data: {error}",
             ))
         }
     };
@@ -43,8 +42,7 @@ fn store_weather(weather: &WeatherInfo, redis_data: &settings::Redis) -> Result<
     {
         Ok(_) => Ok(()),
         Err(error) => Err(format!(
-            "Could not save serialized data into redis: {}",
-            error
+            "Could not save serialized data into redis: {error}"
         )),
     }
 }

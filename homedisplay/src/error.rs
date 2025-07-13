@@ -18,24 +18,24 @@ pub enum HomeDisplayError {
 impl fmt::Display for HomeDisplayError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            HomeDisplayError::RedisConnection(msg) => write!(f, "Redis connection failed: {}", msg),
-            HomeDisplayError::RedisOperation(msg) => write!(f, "Redis operation failed: {}", msg),
-            HomeDisplayError::ApiRequest(msg) => write!(f, "API request failed: {}", msg),
-            HomeDisplayError::DataParsing(msg) => write!(f, "Data parsing failed: {}", msg),
-            HomeDisplayError::SettingsLoad(msg) => write!(f, "Settings load failed: {}", msg),
+            HomeDisplayError::RedisConnection(msg) => write!(f, "Redis connection failed: {msg}"),
+            HomeDisplayError::RedisOperation(msg) => write!(f, "Redis operation failed: {msg}"),
+            HomeDisplayError::ApiRequest(msg) => write!(f, "API request failed: {msg}"),
+            HomeDisplayError::DataParsing(msg) => write!(f, "Data parsing failed: {msg}"),
+            HomeDisplayError::SettingsLoad(msg) => write!(f, "Settings load failed: {msg}"),
             HomeDisplayError::SettingsSerialization(msg) => {
-                write!(f, "Settings serialization failed: {}", msg)
+                write!(f, "Settings serialization failed: {msg}")
             }
             HomeDisplayError::WeatherCodeInvalid(code) => {
-                write!(f, "Invalid weather code: {}", code)
+                write!(f, "Invalid weather code: {code}")
             }
             HomeDisplayError::DateTimeConversion(msg) => {
-                write!(f, "DateTime conversion failed: {}", msg)
+                write!(f, "DateTime conversion failed: {msg}")
             }
-            HomeDisplayError::FileOperation(msg) => write!(f, "File operation failed: {}", msg),
-            HomeDisplayError::NetworkTimeout(msg) => write!(f, "Network timeout: {}", msg),
+            HomeDisplayError::FileOperation(msg) => write!(f, "File operation failed: {msg}"),
+            HomeDisplayError::NetworkTimeout(msg) => write!(f, "Network timeout: {msg}"),
             HomeDisplayError::InvalidConfiguration(msg) => {
-                write!(f, "Invalid configuration: {}", msg)
+                write!(f, "Invalid configuration: {msg}")
             }
         }
     }

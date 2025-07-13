@@ -10,11 +10,11 @@ pub fn get_redis_connection(redis_settings: &settings::Redis) -> Result<redis::C
             redis_settings.host,
             redis_settings.port,
         ))
-        .map_err(|e| format!("Could not connect to redis.\nIs the database running at the given host & port ?\nError: {}", e))?;
+        .map_err(|e| format!("Could not connect to redis.\nIs the database running at the given host & port ?\nError: {e}"))?;
 
     client
         .get_connection()
-        .map_err(|error| format!("Could not connect to redis: {}", error))
+        .map_err(|error| format!("Could not connect to redis: {error}"))
 }
 
 pub async fn get_redis_key(
@@ -26,8 +26,7 @@ pub async fn get_redis_key(
 
     match connection.get::<String, Option<String>>(key) {
         Err(error) => Err(format!(
-            "An error occured while fetching the data from redis: {}",
-            error.to_string()
+            "An error occured while fetching the data from redis: {error}",
         )),
         Ok(None) => Err("No data stored in the database".to_string()),
         Ok(Some(serialized)) => Ok(serialized),
@@ -46,6 +45,6 @@ pub async fn scan_iter(
             values = iterator.collect();
             Ok(values)
         }
-        Err(error) => Err(format!("Unable to get key iterator: {}", error)),
+        Err(error) => Err(format!("Unable to get key iterator: {error}")),
     }
 }
