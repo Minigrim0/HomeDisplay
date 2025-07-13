@@ -12,7 +12,7 @@ use ratatui::{
     },
 };
 
-use common::models::weather::WeatherInfo;
+use homedisplay::models::weather::WeatherInfo;
 
 use crate::utilities::fit_into;
 

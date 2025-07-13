@@ -11,7 +11,7 @@ use ratatui::{
     },
 };
 
-use common::models::currency::Conversion;
+use homedisplay::models::currency::Conversion;
 
 use crate::utilities::fit_into;
 

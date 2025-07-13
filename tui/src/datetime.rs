@@ -1,6 +1,6 @@
 use chrono::prelude::Local;
 use chrono::{FixedOffset, Utc};
-use common::settings::TimezoneData;
+use homedisplay::settings::TimezoneData;
 use log::error;
 use ratatui::text::ToLine;
 use std::time::SystemTime;

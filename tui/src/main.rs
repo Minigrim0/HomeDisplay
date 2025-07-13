@@ -6,11 +6,12 @@ use log;
 use clap::Parser;
 use simplelog::{CombinedLogger, Config, LevelFilter, WriteLogger};
 
-use common::settings::Settings;
+use homedisplay::settings::Settings;
 
 mod app;
 mod currency;
 mod datetime;
+mod error;
 mod transports;
 mod tui;
 mod utilities;

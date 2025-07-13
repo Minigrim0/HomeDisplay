@@ -12,7 +12,7 @@ use ratatui::{
     },
 };
 
-use common::models::transports::{Departure, Site};
+use homedisplay::models::transports::{Departure, Site};
 
 use crate::utilities::fit_into;
 

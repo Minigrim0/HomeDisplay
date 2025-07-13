@@ -9,7 +9,7 @@ use ratatui::{
     Frame,
 };
 
-use common::settings::Settings;
+use homedisplay::settings::Settings;
 
 use crate::currency::CurrencyComponent;
 use crate::datetime::DateTimeComponent;

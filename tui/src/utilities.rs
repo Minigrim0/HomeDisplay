@@ -5,11 +5,11 @@ use crate::currency::CurrencyComponent;
 use crate::transports::TransportComponent;
 use crate::weather::WeatherComponent;
 
-use common::currency::database::fetch_current_conversion;
-use common::transports::database::{get_departures, get_sites};
-use common::models::transports::Departure;
-use common::weather::database::fetch_current_weather;
-use common::settings;
+use homedisplay::currency::database::fetch_current_conversion;
+use homedisplay::transports::database::{get_departures, get_sites};
+use homedisplay::models::transports::Departure;
+use homedisplay::weather::database::fetch_current_weather;
+use homedisplay::settings;
 
 pub fn refresh_weather(weather_settings: settings::Weather, redis_data: &settings::Redis) -> WeatherComponent {
     let rt = match tokio::runtime::Builder::new_current_thread()
