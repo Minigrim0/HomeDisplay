@@ -1,5 +1,5 @@
 /// Async data manager for handling background data fetching
-/// 
+///
 /// This module provides a single Tokio runtime with background tasks that fetch
 /// weather, currency, and transport data concurrently. It bridges async operations
 /// with the synchronous TUI event loop using channels.
@@ -47,7 +47,7 @@ impl Default for RefreshConfig {
     fn default() -> Self {
         Self {
             weather_interval: Duration::from_secs(30 * 60), // 30 minutes
-            currency_interval: Duration::from_secs(60 * 60), // 60 minutes  
+            currency_interval: Duration::from_secs(60 * 60), // 60 minutes
             transport_interval: Duration::from_secs(60),     // 1 minute
         }
     }
@@ -62,7 +62,7 @@ pub struct AsyncDataManager {
 impl AsyncDataManager {
     /// Creates a new async data manager with a single Tokio runtime
     pub fn new() -> TuiResult<Self> {
-        let runtime = tokio::runtime::Builder::new_current_thread()
+        let runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build()
             .map_err(|e| TuiError::TokioRuntime(format!("Failed to create runtime: {}", e)))?;
@@ -74,7 +74,7 @@ impl AsyncDataManager {
     }
 
     /// Starts background data fetching tasks and returns a receiver for updates
-    /// 
+    ///
     /// This method spawns three background tasks that continuously fetch data
     /// and send updates through the returned channel.
     pub fn start_background_tasks(
@@ -82,12 +82,12 @@ impl AsyncDataManager {
         settings: Settings,
         config: RefreshConfig,
     ) -> TuiResult<mpsc::Receiver<DataUpdate>> {
-        info!("Starting async data manager with intervals: weather={}s, currency={}s, transport={}s", 
+        info!("Starting async data manager with intervals: weather={}s, currency={}s, transport={}s",
               config.weather_interval.as_secs(), config.currency_interval.as_secs(), config.transport_interval.as_secs());
-        
+
         let (tx, rx) = mpsc::channel();
         let (shutdown_tx, shutdown_rx) = oneshot::channel();
-        
+
         self.shutdown_tx = Some(shutdown_tx);
 
         // Clone settings for each task
@@ -140,10 +140,8 @@ impl AsyncDataManager {
     ) {
         info!("Weather task started with interval: {}s", interval.as_secs());
         let mut interval_timer = tokio::time::interval(interval);
-        
+
         loop {
-            interval_timer.tick().await;
-            
             info!("Weather task: Starting data fetch");
             let result = match homedisplay::weather::database::fetch_current_weather(settings.clone(), &redis).await {
                 Ok(weather) => {
@@ -162,6 +160,8 @@ impl AsyncDataManager {
             } else {
                 info!("Weather task: Update sent to UI thread successfully");
             }
+
+            interval_timer.tick().await;
         }
     }
 
@@ -174,14 +174,12 @@ impl AsyncDataManager {
     ) {
         info!("Currency task started with interval: {}s", interval.as_secs());
         let mut interval_timer = tokio::time::interval(interval);
-        
+
         loop {
-            interval_timer.tick().await;
-            
             info!("Currency task: Starting data fetch");
             let result = match homedisplay::currency::database::fetch_current_conversion(settings.clone(), &redis).await {
                 Ok(currency) => {
-                    info!("Currency task: Data fetched successfully - {} {} = {} {}", 
+                    info!("Currency task: Data fetched successfully - {} {} = {} {}",
                           currency.from_currency_amount, currency.from_currency,
                           currency.to_currency_amount, currency.to_currency);
                     Ok(currency)
@@ -198,6 +196,8 @@ impl AsyncDataManager {
             } else {
                 info!("Currency task: Update sent to UI thread successfully");
             }
+
+            interval_timer.tick().await;
         }
     }
 
@@ -210,10 +210,8 @@ impl AsyncDataManager {
     ) {
         info!("Transport task started with interval: {}s, monitoring {} stops", interval.as_secs(), stops.len());
         let mut interval_timer = tokio::time::interval(interval);
-        
+
         loop {
-            interval_timer.tick().await;
-            
             info!("Transport task: Starting data fetch for {} stops", stops.len());
             let mut transport_update = TransportUpdate {
                 sites: Vec::new(),
@@ -256,7 +254,7 @@ impl AsyncDataManager {
                         } else {
                             departures
                         };
-                        
+
                         info!("Transport task: Site {} - {} departures after filtering", site.id, filtered_departures.len());
                         filtered_departures
                     },
@@ -279,7 +277,7 @@ impl AsyncDataManager {
                 .filter(|site| transport_update.departures.get(&site.id).map_or(false, |deps| !deps.is_empty()))
                 .collect();
 
-            info!("Transport task: Data processed - {} sites with departures (filtered from {})", 
+            info!("Transport task: Data processed - {} sites with departures (filtered from {})",
                   transport_update.sites.len(), original_count);
 
             if let Err(e) = tx.send(DataUpdate::Transport(transport_update)) {
@@ -288,6 +286,8 @@ impl AsyncDataManager {
             } else {
                 info!("Transport task: Update sent to UI thread successfully");
             }
+
+            interval_timer.tick().await;
         }
     }
 
@@ -296,7 +296,7 @@ impl AsyncDataManager {
         if let Some(shutdown_tx) = self.shutdown_tx.take() {
             let _ = shutdown_tx.send(());
         }
-        
+
         self.runtime.shutdown_timeout(Duration::from_secs(5));
         info!("Async data manager shut down");
     }
