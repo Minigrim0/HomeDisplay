@@ -3,10 +3,10 @@ use log::trace;
 use tauri::State;
 use std::sync::Mutex;
 
-use common::settings::Settings;
-use common::models::weather::WeatherInfo;
-use common::models::transports::{Site, Departure};
-use common::models::currency::Conversion;
+use homedisplay::settings::Settings;
+use homedisplay::models::weather::WeatherInfo;
+use homedisplay::models::transports::{Site, Departure};
+use homedisplay::models::currency::Conversion;
 
 
 #[tauri::command]
@@ -36,7 +36,7 @@ pub async fn get_sites(settings: State<'_, Mutex<Settings>>) -> Result<Vec<Site>
         };
         (settings.transports.clone(), settings.redis.clone())
     };
-    common::transports::database::get_sites(stops, &redis_data).await
+    common::transports::database::get_sites(&stops, &redis_data).await
 }
 
 #[tauri::command]

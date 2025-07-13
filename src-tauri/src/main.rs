@@ -6,7 +6,7 @@ use std::sync::Mutex;
 use log::error;
 use clap::Parser;
 use tauri::{Builder, Manager};
-use common::settings::Settings;
+use homedisplay::settings::Settings;
 
 mod commands;
 
