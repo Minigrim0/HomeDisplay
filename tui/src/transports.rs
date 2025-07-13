@@ -87,13 +87,20 @@ impl Widget for &TransportComponent {
             .border_set(border::THICK);
 
         let counter_text: Text = if let Some(e) = &self.departures.error {
-            let error_lines = fit_into(e.to_string(), (area.width - 2) as usize);
+            let user_message = e.user_message();
+            let detailed_message = if log::log_enabled!(log::Level::Debug) {
+                e.to_string()
+            } else {
+                user_message.to_string()
+            };
+            
+            let error_lines = fit_into(detailed_message, (area.width - 2) as usize);
             let mut lines: Vec<Line> = Vec::new();
             for _ in 1..(area.height - error_lines.len() as u16) / 2 {
                 lines.push(Line::from(""))
             }
 
-            lines.push(Line::from("Error !".red().bold()).centered());
+            lines.push(Line::from("Transport Error".red().bold()).centered());
             for line in error_lines {
                 lines.push(Line::from(line.to_string().yellow()).centered())
             }
@@ -113,10 +120,16 @@ impl Widget for &TransportComponent {
                 ]));
 
                 if self.departures.site_errors.contains_key(&site.id) {
+                    let site_error = &self.departures.site_errors[&site.id];
+                    let error_msg = if log::log_enabled!(log::Level::Debug) {
+                        site_error.to_string()
+                    } else {
+                        site_error.user_message().to_string()
+                    };
                     lines.push(Line::from(format!(
                         "Error: {}",
-                        self.departures.site_errors[&site.id]
-                    )))
+                        error_msg
+                    )).red())
                 }
 
                 for departure in &self.departures.departures[&site.id] {

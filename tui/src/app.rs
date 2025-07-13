@@ -64,6 +64,7 @@ impl App {
         Ok(())
     }
 
+    /// Renders all components to the terminal frame in a three-column layout
     fn render_frame(&self, frame: &mut Frame) {
         let chunks = Layout::horizontal([Constraint::Ratio(1, 3); 3])
             .split(frame.area());
@@ -132,12 +133,14 @@ impl App {
         Ok(())
     }
 
+    /// Forces a complete refresh of all data components
     fn force_complete_refresh(&mut self) {
         self.weather = utilities::refresh_weather(self.settings.weather.clone(), &self.settings.redis);
         self.currency = utilities::refresh_conversion(self.settings.currency.clone(), &self.settings.redis);
         utilities::refresh_sites(&mut self.transports, self.settings.transports.clone(), &self.settings.redis);
     }
 
+    /// Handles keyboard input events
     fn handle_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
             KeyCode::Char('q') => self.exit = true,
@@ -146,6 +149,7 @@ impl App {
         }
     }
 
+    /// Polls for and handles terminal events (keyboard input)
     fn handle_events(&mut self) -> io::Result<()> {
         if poll(Duration::from_millis(500))? {
             // Poll for events during 500ms -> ~2fps

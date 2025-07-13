@@ -90,14 +90,21 @@ impl Widget for &CurrencyComponent {
                 Text::from(lines)
             }
             Err(e) => {
-                let error_lines = fit_into(e.to_string(), (area.width - 2) as usize);
+                let user_message = e.user_message();
+                let detailed_message = if log::log_enabled!(log::Level::Debug) {
+                    e.to_string()
+                } else {
+                    user_message.to_string()
+                };
+                
+                let error_lines = fit_into(detailed_message, (area.width - 2) as usize);
                 let mut lines: Vec<Line> = Vec::new();
 
                 for _ in 1..(area.height - error_lines.len() as u16) / 2 {
                     lines.push(Line::from(""))
                 }
 
-                lines.push(Line::from("Error !".red().bold()).centered());
+                lines.push(Line::from("Currency Error".red().bold()).centered());
                 for line in error_lines {
                     lines.push(Line::from(line).yellow().centered());
                 }

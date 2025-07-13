@@ -1,5 +1,6 @@
 use std::io::{self, stdout, Stdout};
 
+use crate::error::{TuiError, TuiResult};
 use ratatui::{
     backend::CrosstermBackend,
     crossterm::{
@@ -12,7 +13,9 @@ use ratatui::{
 /// A type alias for the terminal type used in this application
 pub type Tui = Terminal<CrosstermBackend<Stdout>>;
 
-/// Initialize the terminal
+/// Initialize the terminal for TUI mode
+/// 
+/// This function switches to alternate screen and enables raw mode
 pub fn init() -> io::Result<Tui> {
     execute!(stdout(), EnterAlternateScreen)?;
     enable_raw_mode()?;
@@ -20,6 +23,8 @@ pub fn init() -> io::Result<Tui> {
 }
 
 /// Restore the terminal to its original state
+/// 
+/// This function exits alternate screen and disables raw mode
 pub fn restore() -> io::Result<()> {
     execute!(stdout(), LeaveAlternateScreen)?;
     disable_raw_mode()?;
