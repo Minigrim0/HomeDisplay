@@ -11,11 +11,14 @@ on:
         required: false
         default: false
         type: boolean
+  push:
+    branches: [main]
 
 jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
     permissions:
       contents: write
     steps:
@@ -81,28 +84,85 @@ jobs:
           cat CHANGELOG.md >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Commit version changes
+      - name: Create version bump branch
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          git checkout -b "release/v${{ inputs.version }}"
           git add Cargo.toml src-tauri/tauri.conf.json
           git commit -m "Bump version to ${{ inputs.version }}"
+          git push -u origin "release/v${{ inputs.version }}"
+
+      - name: Create Pull Request
+        run: |
+          gh pr create \
+            --title "Release v${{ inputs.version }}" \
+            --body "$(cat <<'EOF'
+          ## Release v${{ inputs.version }}
+          
+          ${{ steps.changelog.outputs.changelog }}
+          
+          This PR bumps the version to ${{ inputs.version }} and prepares for release.
+          
+          **Once this PR is merged, the tag and GitHub release will be created automatically.**
+          EOF
+          )" \
+            --base main \
+            --head "release/v${{ inputs.version }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  create-release-after-merge:
+    name: Create Release After PR Merge
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'Bump version to')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version from commit message
+        id: extract_version
+        run: |
+          VERSION=$(echo "${{ github.event.head_commit.message }}" | grep -oP "Bump version to \K[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog for release
+        id: release_changelog
+        run: |
+          # Get commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$LAST_TAG" ]; then
+            echo "## Changes since $LAST_TAG" > CHANGELOG.md
+            git log --pretty=format:"- %s (%h)" "$LAST_TAG"..HEAD >> CHANGELOG.md
+          else
+            echo "## Changes" > CHANGELOG.md
+            git log --pretty=format:"- %s (%h)" >> CHANGELOG.md
+          fi
+          
+          # Set multiline output
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          cat CHANGELOG.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create and push tag
         run: |
-          git tag "v${{ inputs.version }}"
-          git push origin main
-          git push origin "v${{ inputs.version }}"
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag "v${{ steps.extract_version.outputs.version }}"
+          git push origin "v${{ steps.extract_version.outputs.version }}"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ inputs.version }}
-          name: HomeDisplay v${{ inputs.version }}
+          tag_name: v${{ steps.extract_version.outputs.version }}
+          name: HomeDisplay v${{ steps.extract_version.outputs.version }}
           body: |
-            ${{ steps.changelog.outputs.changelog }}
+            ${{ steps.release_changelog.outputs.changelog }}
             
             ## Installation
             
@@ -123,4 +183,4 @@ jobs:
             # Install .deb package with: sudo dpkg -i home-display_*.deb
             ```
           draft: false
-          prerelease: ${{ inputs.prerelease }}
+          prerelease: false
