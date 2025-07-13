@@ -1,11 +1,11 @@
 [package]
 name = "hd-tauri"
-version = "0.3.0"
 description = "A tauri application for home-display"
-authors = ["Minigrim0"]
-license = "MIT"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
 repository = "https://github.com/Minigrim0/HomeDisplay"
-edition = "2021"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

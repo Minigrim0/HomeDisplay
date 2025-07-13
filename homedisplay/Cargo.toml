@@ -1,10 +1,10 @@
 [package]
 name = "homedisplay"
 description = "HomeDisplay common crate. Contains all the source code required to perform api calls & database caching"
-authors = ["Minigrim0"]
-version = "1.0.0"
-edition = "2021"
-license = "MIT"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
 repository = "https://github.com/Minigrim0/HomeDisplay"
 
 [dependencies]

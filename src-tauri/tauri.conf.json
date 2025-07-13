@@ -7,7 +7,7 @@
   },
   "productName": "home-display",
   "mainBinaryName": "home-display",
-  "version": "0.3.0",
+  "version": "0.7.1",
   "identifier": "xyz.minigrim0.homedisplay",
   "bundle": {
     "active": true,

@@ -1,0 +1,132 @@
+name: Create Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.7.0)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Mark as pre-release'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate version format
+        run: |
+          if ! echo "${{ inputs.version }}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$'; then
+            echo "Error: Version must follow semantic versioning (e.g., 1.2.3, 1.2.3-alpha)"
+            exit 1
+          fi
+
+      - name: Check if tag already exists
+        run: |
+          if git rev-parse "v${{ inputs.version }}" >/dev/null 2>&1; then
+            echo "Error: Tag v${{ inputs.version }} already exists"
+            exit 1
+          fi
+
+      - name: Update version files
+        run: |
+          # Update workspace Cargo.toml
+          sed -i "s/^version = \".*\"/version = \"${{ inputs.version }}\"/" Cargo.toml
+          
+          # Update tauri.conf.json
+          if command -v jq >/dev/null 2>&1; then
+            jq --arg version "${{ inputs.version }}" '.version = $version' src-tauri/tauri.conf.json > src-tauri/tauri.conf.json.tmp
+            mv src-tauri/tauri.conf.json.tmp src-tauri/tauri.conf.json
+          else
+            sed -i "s/\"version\": \".*\"/\"version\": \"${{ inputs.version }}\"/" src-tauri/tauri.conf.json
+          fi
+
+      - name: Verify version updates
+        run: |
+          echo "Workspace version: $(grep '^version =' Cargo.toml | cut -d'"' -f2)"
+          echo "Tauri version: $(grep '"version"' src-tauri/tauri.conf.json | cut -d'"' -f4)"
+
+      - name: Setup Rust for version check
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          profile: minimal
+
+      - name: Verify cargo metadata
+        run: |
+          echo "Checking that all crates inherit the workspace version..."
+          cargo metadata --format-version 1 | jq -r '.packages[] | select(.name | test("^(homedisplay|hd-tui|frontend|hd-tauri)$")) | "\(.name): \(.version)"'
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$LAST_TAG" ]; then
+            echo "## Changes since $LAST_TAG" > CHANGELOG.md
+            git log --pretty=format:"- %s (%h)" "$LAST_TAG"..HEAD >> CHANGELOG.md
+          else
+            echo "## Changes" > CHANGELOG.md
+            git log --pretty=format:"- %s (%h)" >> CHANGELOG.md
+          fi
+          
+          # Set multiline output
+          {
+            echo 'changelog<<EOF'
+            cat CHANGELOG.md
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
+      - name: Commit version changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add Cargo.toml src-tauri/tauri.conf.json
+          git commit -m "Bump version to ${{ inputs.version }}"
+
+      - name: Create and push tag
+        run: |
+          git tag "v${{ inputs.version }}"
+          git push origin main
+          git push origin "v${{ inputs.version }}"
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ inputs.version }}
+          release_name: HomeDisplay v${{ inputs.version }}
+          body: |
+            ${{ steps.changelog.outputs.changelog }}
+            
+            ## Installation
+            
+            ### TUI Version (Raspberry Pi)
+            Download `hd-tui` binary from the assets below.
+            
+            ### Desktop Version (x86_64)
+            - **Linux**: Download the `.deb` package or `.AppImage`
+            - **TUI**: Download `hd-tui` binary
+            
+            ## Usage
+            
+            ```bash
+            # TUI version
+            ./hd-tui --help
+            
+            # Desktop version
+            # Install .deb package with: sudo dpkg -i home-display_*.deb
+            ```
+          draft: false
+          prerelease: ${{ inputs.prerelease }}

@@ -1,11 +1,11 @@
 [package]
 name = "hd-tui"
-version = "0.5.0"
 description = "A tui application for home-display"
-authors = ["Minigrim0"]
-license = "MIT"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
 repository = "https://github.com/Minigrim0/HomeDisplay"
-edition = "2021"
 
 [dependencies]
 color-eyre = { version = "0.6.3" }
