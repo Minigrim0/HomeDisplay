@@ -14,19 +14,22 @@ use ratatui::{
 
 use homedisplay::models::weather::WeatherInfo;
 
+use crate::error::{TuiError, TuiResult};
 use crate::utilities::fit_into;
 
 #[derive(Debug)]
+/// Weather display component that shows current conditions and forecasts
 pub struct WeatherComponent {
-    pub last_refresh: SystemTime,
-    pub weather: Result<WeatherInfo, String>,
-    pub cooldown: Duration,
-    pub current_forecast_day: u8,
-    pub last_forecast_change: SystemTime,
+    pub last_refresh: SystemTime,              // Last time weather data was refreshed
+    pub weather: Result<WeatherInfo, TuiError>, // Current weather data or error
+    pub cooldown: Duration,                     // Time between refresh attempts
+    pub current_forecast_day: u8,               // Currently displayed forecast day (0-6)
+    pub last_forecast_change: SystemTime,       // Last time forecast display rotated
 }
 
 impl WeatherComponent {
-    pub fn new(weather: Result<WeatherInfo, String>) -> WeatherComponent {
+    /// Creates a new weather component with the given weather data
+    pub fn new(weather: Result<WeatherInfo, TuiError>) -> WeatherComponent {
         let mut w = WeatherComponent::default();
         w.last_refresh = SystemTime::now();
         w.weather = weather;
@@ -38,7 +41,7 @@ impl Default for WeatherComponent {
     fn default() -> WeatherComponent {
         WeatherComponent {
             last_refresh: SystemTime::now(),
-            weather: Err("No weather was fetched yet".to_string()),
+            weather: Err(TuiError::WeatherFetch("No weather was fetched yet".to_string())),
             cooldown: Duration::from_secs(30 * 60),
             current_forecast_day: 0,
             last_forecast_change: SystemTime::now(),

@@ -13,27 +13,30 @@ use ratatui::{
 
 use homedisplay::models::currency::Conversion;
 
+use crate::error::{TuiError, TuiResult};
 use crate::utilities::fit_into;
 
 #[derive(Debug)]
+/// Currency conversion display component
 pub struct CurrencyComponent {
-    pub last_refresh: SystemTime,
-    pub conversion: Result<Conversion, String>,
-    pub cooldown: Duration,
+    pub last_refresh: SystemTime,                 // Last time conversion data was refreshed
+    pub conversion: Result<Conversion, TuiError>,  // Current conversion data or error
+    pub cooldown: Duration,                        // Time between refresh attempts
 }
 
 impl Default for CurrencyComponent {
     fn default() -> CurrencyComponent {
         CurrencyComponent {
             last_refresh: SystemTime::now(),
-            conversion: Err("No conversion was fetched yet".to_string()),
+            conversion: Err(TuiError::CurrencyFetch("No conversion was fetched yet".to_string())),
             cooldown: Duration::from_secs(60 * 60), // Once per hour
         }
     }
 }
 
 impl CurrencyComponent {
-    pub fn new(conversion: Result<Conversion, String>) -> CurrencyComponent {
+    /// Creates a new currency component with the given conversion data
+    pub fn new(conversion: Result<Conversion, TuiError>) -> CurrencyComponent {
         let mut w = CurrencyComponent::default();
         w.last_refresh = SystemTime::now();
         w.conversion = conversion;

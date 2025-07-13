@@ -14,14 +14,16 @@ use ratatui::{
 
 use homedisplay::models::transports::{Departure, Site};
 
+use crate::error::{TuiError, TuiResult};
 use crate::utilities::fit_into;
 
 #[derive(Debug)]
+/// Container for departure data across multiple transport sites
 pub struct Departures {
-    pub sites: Vec<Site>,
-    pub departures: HashMap<String, Vec<Departure>>,
-    pub site_errors: HashMap<String, String>,
-    pub error: Option<String>,
+    pub sites: Vec<Site>,                             // List of transport sites
+    pub departures: HashMap<String, Vec<Departure>>,  // Departures grouped by site ID
+    pub site_errors: HashMap<String, TuiError>,       // Per-site error messages
+    pub error: Option<TuiError>,                      // General error for all sites
 }
 
 impl Default for Departures {
@@ -30,19 +32,21 @@ impl Default for Departures {
             sites: Vec::new(),
             departures: HashMap::new(),
             site_errors: HashMap::new(),
-            error: Some("No departures were fetched yet".to_string()),
+            error: Some(TuiError::TransportFetch("No departures were fetched yet".to_string())),
         }
     }
 }
 
 #[derive(Debug)]
+/// Transport departure display component
 pub struct TransportComponent {
-    pub last_refresh: SystemTime,
-    pub departures: Departures,
-    pub cooldown: Duration,
+    pub last_refresh: SystemTime,  // Last time departure data was refreshed
+    pub departures: Departures,     // Current departure data
+    pub cooldown: Duration,         // Time between refresh attempts
 }
 
 impl TransportComponent {
+    /// Creates a new transport component with the given departure data
     pub fn new(departures: Departures) -> TransportComponent {
         let mut w = TransportComponent::default();
         w.last_refresh = SystemTime::now();

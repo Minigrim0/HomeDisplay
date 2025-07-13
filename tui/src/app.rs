@@ -12,6 +12,7 @@ use ratatui::{
 use homedisplay::settings::Settings;
 
 use crate::currency::CurrencyComponent;
+use crate::error::{TuiError, TuiResult};
 use crate::datetime::DateTimeComponent;
 use crate::transports::TransportComponent;
 use crate::tui::Tui;
@@ -19,17 +20,18 @@ use crate::utilities;
 use crate::weather::WeatherComponent;
 
 #[derive(Debug, Default)]
-// Application state
+/// Main application state containing all UI components
 pub struct App {
-    pub exit: bool,
-    pub settings: Settings,
-    pub weather: WeatherComponent,
-    pub datetime: DateTimeComponent,
-    pub currency: CurrencyComponent,
-    pub transports: TransportComponent,
+    pub exit: bool,                        // Flag to exit the application
+    pub settings: Settings,                // Application configuration
+    pub weather: WeatherComponent,         // Weather display component
+    pub datetime: DateTimeComponent,       // Date/time display component
+    pub currency: CurrencyComponent,       // Currency conversion component
+    pub transports: TransportComponent,    // Transport departure component
 }
 
 impl App {
+    /// Loads settings from file and configures the application
     pub fn with_settings(mut self, settings_file: &str) -> Self {
         let settings = Settings::load_from_file(settings_file).unwrap_or_else(|e| {
             log::error!("Unable to load settings from file: {}. Using default value", e);
@@ -43,14 +45,15 @@ impl App {
         self
     }
 
-    /// runs the application's main loop until the user quits
+    /// Runs the application's main loop until the user quits
     pub fn run(&mut self, terminal: &mut Tui) -> io::Result<()> {
         self.force_complete_refresh(); // Initial refresh
         while !self.exit {
             if let Ok(size) = terminal.size() {
                 if size.height < 5 || size.width < 30 {
                     log::error!("{}x{} is not big enough", size.width, size.height);
-                    return Err(io::Error::new(ErrorKind::Other, "Terminal not big enough"));
+                    let error = TuiError::terminal_too_small(size.width, size.height);
+                    return Err(io::Error::new(ErrorKind::Other, error.to_string()));
                 }
             }
 
@@ -82,7 +85,7 @@ impl App {
                     self.weather = utilities::refresh_weather(self.settings.weather.clone(), &self.settings.redis);
                 }
             }
-            Err(e) => self.weather = WeatherComponent::new(Err(e.to_string())),
+            Err(e) => self.weather = WeatherComponent::new(Err(TuiError::SystemTime(e.to_string()))),
         }
 
         match SystemTime::now().duration_since(self.currency.last_refresh) {
@@ -91,7 +94,7 @@ impl App {
                     self.currency = utilities::refresh_conversion(self.settings.currency.clone(), &self.settings.redis);
                 }
             }
-            Err(e) => self.currency = CurrencyComponent::new(Err(e.to_string())),
+            Err(e) => self.currency = CurrencyComponent::new(Err(TuiError::SystemTime(e.to_string()))),
         }
 
         match SystemTime::now().duration_since(self.transports.last_refresh) {
@@ -100,7 +103,7 @@ impl App {
                     utilities::refresh_sites(&mut self.transports, self.settings.transports.clone(), &self.settings.redis);
                 }
             }
-            Err(e) => self.transports.departures.error = Some(e.to_string()),
+            Err(e) => self.transports.departures.error = Some(TuiError::SystemTime(e.to_string())),
         }
 
         match SystemTime::now().duration_since(self.weather.last_forecast_change) {
