@@ -1,10 +1,10 @@
+use async_trait::async_trait;
 use reqwest::Url;
 use serde_derive::Deserialize;
 use std::collections::HashMap;
-use async_trait::async_trait;
 
-use crate::traits::Api;
 use crate::models::currency::Conversion;
+use crate::traits::Api;
 
 use crate::settings::Currency as CurrencySettings;
 
@@ -12,11 +12,15 @@ use crate::settings::Currency as CurrencySettings;
 /// An API response from Open Exchange Rates
 struct APIResponse {
     pub timestamp: i64,
-    pub rates: HashMap<String, f32>
+    pub rates: HashMap<String, f32>,
 }
 
 trait ConversionFromAPI {
-    fn from_base(api_response: APIResponse, from_currency: String, to_currency: String) -> Conversion;
+    fn from_base(
+        api_response: APIResponse,
+        from_currency: String,
+        to_currency: String,
+    ) -> Conversion;
 }
 
 impl ConversionFromAPI for Conversion {
@@ -24,12 +28,12 @@ impl ConversionFromAPI for Conversion {
     fn from_base(data: APIResponse, from_currency: String, to_currency: String) -> Conversion {
         let from: f32 = match data.rates.get(&from_currency) {
             Some(value) => *value,
-            None => 0.0
+            None => 0.0,
         };
 
         let to: f32 = match data.rates.get(&to_currency) {
             Some(value) => *value,
-            None => 0.0
+            None => 0.0,
         };
 
         Conversion {
@@ -37,7 +41,7 @@ impl ConversionFromAPI for Conversion {
             from_currency_amount: 1.0,
             to_currency,
             to_currency_amount: (to / from),
-            timestamp: data.timestamp
+            timestamp: data.timestamp,
         }
     }
 }
@@ -50,20 +54,34 @@ impl Api<CurrencySettings, Conversion> for Conversion {
             format!(
                 "https://openexchangerates.org/api/latest.json?app_id={}",
                 currency_settings.api_key
-            ).as_str()
-        ).map_err(|err| format!("Could not parse URL: {}", err))?;
+            )
+            .as_str(),
+        )
+        .map_err(|err| format!("Could not parse URL: {}", err))?;
 
-        let result = reqwest::get(url)
-            .await
-            .map_err(|error| format!("Error while fetching OpenExchangeRates API: {}", error.to_string()))?;
+        let result = reqwest::get(url).await.map_err(|error| {
+            format!(
+                "Error while fetching OpenExchangeRates API: {}",
+                error.to_string()
+            )
+        })?;
 
         match result.status() {
             reqwest::StatusCode::OK => match result.json::<APIResponse>().await {
-                Ok(data) => Ok(Conversion::from_base(data, currency_settings.currency_from, currency_settings.currency_to)),
-                Err(err) => Err(format!("Error while converting Conversion data: {}", err.to_string()))
+                Ok(data) => Ok(Conversion::from_base(
+                    data,
+                    currency_settings.currency_from,
+                    currency_settings.currency_to,
+                )),
+                Err(err) => Err(format!(
+                    "Error while converting Conversion data: {}",
+                    err.to_string()
+                )),
             },
-            reqwest::StatusCode::UNAUTHORIZED => Err("Openexchangerates token is invalid".to_string()),
-            _ => Err(format!("Unexpected error ({})", result.status()))
+            reqwest::StatusCode::UNAUTHORIZED => {
+                Err("Openexchangerates token is invalid".to_string())
+            }
+            _ => Err(format!("Unexpected error ({})", result.status())),
         }
     }
 }

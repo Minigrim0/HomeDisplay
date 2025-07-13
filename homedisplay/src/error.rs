@@ -23,12 +23,20 @@ impl fmt::Display for HomeDisplayError {
             HomeDisplayError::ApiRequest(msg) => write!(f, "API request failed: {}", msg),
             HomeDisplayError::DataParsing(msg) => write!(f, "Data parsing failed: {}", msg),
             HomeDisplayError::SettingsLoad(msg) => write!(f, "Settings load failed: {}", msg),
-            HomeDisplayError::SettingsSerialization(msg) => write!(f, "Settings serialization failed: {}", msg),
-            HomeDisplayError::WeatherCodeInvalid(code) => write!(f, "Invalid weather code: {}", code),
-            HomeDisplayError::DateTimeConversion(msg) => write!(f, "DateTime conversion failed: {}", msg),
+            HomeDisplayError::SettingsSerialization(msg) => {
+                write!(f, "Settings serialization failed: {}", msg)
+            }
+            HomeDisplayError::WeatherCodeInvalid(code) => {
+                write!(f, "Invalid weather code: {}", code)
+            }
+            HomeDisplayError::DateTimeConversion(msg) => {
+                write!(f, "DateTime conversion failed: {}", msg)
+            }
             HomeDisplayError::FileOperation(msg) => write!(f, "File operation failed: {}", msg),
             HomeDisplayError::NetworkTimeout(msg) => write!(f, "Network timeout: {}", msg),
-            HomeDisplayError::InvalidConfiguration(msg) => write!(f, "Invalid configuration: {}", msg),
+            HomeDisplayError::InvalidConfiguration(msg) => {
+                write!(f, "Invalid configuration: {}", msg)
+            }
         }
     }
 }
@@ -86,9 +94,9 @@ impl HomeDisplayError {
         {
             matches!(
                 self,
-                HomeDisplayError::RedisConnection(_) |
-                HomeDisplayError::ApiRequest(_) |
-                HomeDisplayError::NetworkTimeout(_)
+                HomeDisplayError::RedisConnection(_)
+                    | HomeDisplayError::ApiRequest(_)
+                    | HomeDisplayError::NetworkTimeout(_)
             )
         }
         #[cfg(not(feature = "network"))]

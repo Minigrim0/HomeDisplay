@@ -53,10 +53,10 @@ impl TuiError {
     pub fn is_recoverable(&self) -> bool {
         matches!(
             self,
-            TuiError::WeatherFetch(_) | 
-            TuiError::CurrencyFetch(_) | 
-            TuiError::TransportFetch(_) |
-            TuiError::TerminalTooSmall { .. }
+            TuiError::WeatherFetch(_)
+                | TuiError::CurrencyFetch(_)
+                | TuiError::TransportFetch(_)
+                | TuiError::TerminalTooSmall { .. }
         )
     }
 

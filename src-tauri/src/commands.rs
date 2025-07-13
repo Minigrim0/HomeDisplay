@@ -1,13 +1,12 @@
 use log::trace;
 
-use tauri::State;
 use std::sync::Mutex;
+use tauri::State;
 
-use homedisplay::settings::Settings;
-use homedisplay::models::weather::WeatherInfo;
-use homedisplay::models::transports::{Site, Departure};
 use homedisplay::models::currency::Conversion;
-
+use homedisplay::models::transports::{Departure, Site};
+use homedisplay::models::weather::WeatherInfo;
+use homedisplay::settings::Settings;
 
 #[tauri::command]
 /// Get the current currency conversion from the database.
@@ -42,7 +41,10 @@ pub async fn get_sites(settings: State<'_, Mutex<Settings>>) -> Result<Vec<Site>
 #[tauri::command]
 /// Returns the sites from the database. The list is filtered using elements in the
 /// `SL_PLACE_BUS_STOPS` environment variable.
-pub async fn get_departures(settings: State<'_, Mutex<Settings>>, site_id: String) -> Result<Vec<Departure>, String> {
+pub async fn get_departures(
+    settings: State<'_, Mutex<Settings>>,
+    site_id: String,
+) -> Result<Vec<Departure>, String> {
     trace!("Departures tauri command invoked");
     let redis_data = {
         let settings = match settings.lock() {

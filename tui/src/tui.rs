@@ -13,7 +13,7 @@ use ratatui::{
 pub type Tui = Terminal<CrosstermBackend<Stdout>>;
 
 /// Initialize the terminal for TUI mode
-/// 
+///
 /// This function switches to alternate screen and enables raw mode
 pub fn init() -> io::Result<Tui> {
     log::info!("Initializing terminal for TUI mode");
@@ -34,7 +34,7 @@ pub fn init() -> io::Result<Tui> {
 }
 
 /// Restore the terminal to its original state
-/// 
+///
 /// This function exits alternate screen and disables raw mode
 pub fn restore() -> io::Result<()> {
     log::info!("Restoring terminal to original state");

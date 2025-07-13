@@ -7,9 +7,7 @@ use ratatui::{
     style::Stylize,
     symbols::border,
     text::{Line, Text},
-    widgets::{
-        Block, Borders, Paragraph, Widget,
-    },
+    widgets::{Block, Borders, Paragraph, Widget},
 };
 
 use homedisplay::models::transports::{Departure, Site};
@@ -20,10 +18,10 @@ use crate::utilities::fit_into;
 #[derive(Debug)]
 /// Container for departure data across multiple transport sites
 pub struct Departures {
-    pub sites: Vec<Site>,                             // List of transport sites
-    pub departures: HashMap<String, Vec<Departure>>,  // Departures grouped by site ID
-    pub site_errors: HashMap<String, TuiError>,       // Per-site error messages
-    pub error: Option<TuiError>,                      // General error for all sites
+    pub sites: Vec<Site>,                            // List of transport sites
+    pub departures: HashMap<String, Vec<Departure>>, // Departures grouped by site ID
+    pub site_errors: HashMap<String, TuiError>,      // Per-site error messages
+    pub error: Option<TuiError>,                     // General error for all sites
 }
 
 impl Default for Departures {
@@ -32,7 +30,9 @@ impl Default for Departures {
             sites: Vec::new(),
             departures: HashMap::new(),
             site_errors: HashMap::new(),
-            error: Some(TuiError::TransportFetch("No departures were fetched yet".to_string())),
+            error: Some(TuiError::TransportFetch(
+                "No departures were fetched yet".to_string(),
+            )),
         }
     }
 }
@@ -40,9 +40,9 @@ impl Default for Departures {
 #[derive(Debug)]
 /// Transport departure display component
 pub struct TransportComponent {
-    pub last_refresh: SystemTime,  // Last time departure data was refreshed
-    pub departures: Departures,     // Current departure data
-    pub cooldown: Duration,         // Time between refresh attempts
+    pub last_refresh: SystemTime, // Last time departure data was refreshed
+    pub departures: Departures,   // Current departure data
+    pub cooldown: Duration,       // Time between refresh attempts
 }
 
 impl TransportComponent {
@@ -67,8 +67,8 @@ impl Default for TransportComponent {
 
 impl Widget for &TransportComponent {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let last_refreshed = Line::from(
-            match SystemTime::now().duration_since(self.last_refresh) {
+        let last_refreshed =
+            Line::from(match SystemTime::now().duration_since(self.last_refresh) {
                 Ok(duration) => {
                     let seconds = duration.as_secs();
                     format!(
@@ -78,8 +78,7 @@ impl Widget for &TransportComponent {
                     )
                 }
                 Err(e) => format!("Err: {}", e.to_string()),
-            },
-        );
+            });
 
         let weather_block = Block::new()
             .borders(Borders::LEFT)
@@ -94,7 +93,7 @@ impl Widget for &TransportComponent {
             } else {
                 user_message.to_string()
             };
-            
+
             let error_lines = fit_into(detailed_message, (area.width - 2) as usize);
             let mut lines: Vec<Line> = Vec::new();
             for _ in 1..(area.height - error_lines.len() as u16) / 2 {
@@ -127,17 +126,14 @@ impl Widget for &TransportComponent {
                     } else {
                         site_error.user_message().to_string()
                     };
-                    lines.push(Line::from(format!(
-                        "Error: {}",
-                        error_msg
-                    )).red())
+                    lines.push(Line::from(format!("Error: {}", error_msg)).red())
                 }
 
                 for departure in &self.departures.departures[&site.id] {
                     lines.push(Line::from(vec![
                         format!("   {:6}", departure.display).into(),
                         format!(" - {}", departure.line.id).bold(),
-                        format!(" {}", departure.destination).into()
+                        format!(" {}", departure.destination).into(),
                     ]));
                 }
                 lines.push(Line::from(""));

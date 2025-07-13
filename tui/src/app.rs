@@ -14,21 +14,21 @@ use homedisplay::settings::Settings;
 
 use crate::async_manager::{AsyncDataManager, DataUpdate, RefreshConfig};
 use crate::currency::CurrencyComponent;
-use crate::error::TuiError;
 use crate::datetime::DateTimeComponent;
-use crate::transports::{TransportComponent, Departures};
+use crate::error::TuiError;
+use crate::transports::{Departures, TransportComponent};
 use crate::tui::Tui;
 use crate::weather::WeatherComponent;
 
 #[derive(Debug)]
 /// Main application state containing all UI components
 pub struct App {
-    pub exit: bool,                           // Flag to exit the application
-    pub settings: Settings,                   // Application configuration
-    pub weather: WeatherComponent,            // Weather display component
-    pub datetime: DateTimeComponent,          // Date/time display component
-    pub currency: CurrencyComponent,          // Currency conversion component
-    pub transports: TransportComponent,       // Transport departure component
+    pub exit: bool,                                        // Flag to exit the application
+    pub settings: Settings,                                // Application configuration
+    pub weather: WeatherComponent,                         // Weather display component
+    pub datetime: DateTimeComponent,                       // Date/time display component
+    pub currency: CurrencyComponent,                       // Currency conversion component
+    pub transports: TransportComponent,                    // Transport departure component
     pub data_receiver: Option<mpsc::Receiver<DataUpdate>>, // Channel for async data updates
     pub async_manager: Option<AsyncDataManager>,           // Async data manager (kept alive)
 }
@@ -52,7 +52,10 @@ impl App {
     /// Loads settings from file and configures the application
     pub fn with_settings(mut self, settings_file: &str) -> Self {
         let settings = Settings::load_from_file(settings_file).unwrap_or_else(|e| {
-            log::error!("Unable to load settings from file: {}. Using default value", e);
+            log::error!(
+                "Unable to load settings from file: {}. Using default value",
+                e
+            );
             Settings::default()
         });
         self.settings = settings;
@@ -69,10 +72,10 @@ impl App {
         let config = RefreshConfig::default();
         let receiver = manager.start_background_tasks(self.settings.clone(), config)?;
         self.data_receiver = Some(receiver);
-        
+
         // Store the manager to keep it alive
         self.async_manager = Some(manager);
-        
+
         Ok(())
     }
 
@@ -83,13 +86,16 @@ impl App {
             log::error!("Failed to start async data manager: {}", e);
             return Err(io::Error::new(ErrorKind::Other, e.to_string()));
         }
-        
+
         log::info!("Entering main application loop");
         while !self.exit {
             if let Ok(size) = terminal.size() {
                 if size.height < 5 || size.width < 30 {
                     log::error!("{}x{} is not big enough", size.width, size.height);
-                    let error = TuiError::TerminalTooSmall { width: size.width, height: size.height };
+                    let error = TuiError::TerminalTooSmall {
+                        width: size.width,
+                        height: size.height,
+                    };
                     return Err(io::Error::new(ErrorKind::Other, error.to_string()));
                 }
             }
@@ -104,11 +110,10 @@ impl App {
 
     /// Renders all components to the terminal frame in a three-column layout
     fn render_frame(&self, frame: &mut Frame) {
-        let chunks = Layout::horizontal([Constraint::Ratio(1, 3); 3])
-            .split(frame.area());
+        let chunks = Layout::horizontal([Constraint::Ratio(1, 3); 3]).split(frame.area());
 
-        let middle_split = Layout::vertical([Constraint::Ratio(4, 5), Constraint::Ratio(1, 5)])
-            .split(chunks[1]);
+        let middle_split =
+            Layout::vertical([Constraint::Ratio(4, 5), Constraint::Ratio(1, 5)]).split(chunks[1]);
 
         frame.render_widget(&self.weather, chunks[0]);
         frame.render_widget(&self.datetime, middle_split[0]);
@@ -146,7 +151,7 @@ impl App {
     fn update_state(&mut self) -> io::Result<()> {
         // Process any new data from async tasks
         self.process_async_updates();
-        
+
         // Handle UI-specific updates (forecast cycling, timezone cycling)
 
         match SystemTime::now().duration_since(self.weather.last_forecast_change) {
@@ -155,7 +160,7 @@ impl App {
                     self.weather.current_forecast_day = (self.weather.current_forecast_day + 1) % 7;
                     self.weather.last_forecast_change = SystemTime::now();
                 }
-            },
+            }
             Err(e) => {
                 error!("Error: {}", e.to_string());
             }
@@ -166,7 +171,7 @@ impl App {
                 if duration.as_secs() > 5 {
                     self.datetime.advance_timezone();
                 }
-            },
+            }
             Err(e) => {
                 error!("Error: {}", e.to_string());
             }
@@ -189,11 +194,13 @@ impl App {
             KeyCode::Char('q') => {
                 log::info!("User pressed 'q', exiting application");
                 self.exit = true;
-            },
+            }
             KeyCode::Char('r') => {
-                log::info!("User pressed 'r', triggering refresh (note: now handled by async tasks)");
+                log::info!(
+                    "User pressed 'r', triggering refresh (note: now handled by async tasks)"
+                );
                 self.force_complete_refresh();
-            },
+            }
             _ => {
                 log::debug!("Unhandled key event: {:?}", key_event.code);
             }

@@ -1,10 +1,9 @@
 use chrono::prelude::{DateTime, Local};
 use futures::StreamExt;
-use yew::{html, Html, Component, Context, Properties};
+use yew::{html, Component, Context, Html, Properties};
 
-use super::services::{start_currency_job, stream_time, refresh_currency};
+use super::services::{refresh_currency, start_currency_job, stream_time};
 use homedisplay::models::currency::Conversion;
-
 
 pub struct CurrencyComponent {
     currency: Option<Conversion>,
@@ -16,7 +15,7 @@ pub struct CurrencyComponent {
 pub enum Msg {
     ClockUpdate(DateTime<Local>),
     LoadCurrencyData,
-    CurrencyDataReceived(Result<Conversion, String>)
+    CurrencyDataReceived(Result<Conversion, String>),
 }
 
 #[derive(Properties, PartialEq)]
@@ -50,22 +49,22 @@ impl Component for CurrencyComponent {
 
         match msg {
             Msg::ClockUpdate(time) => {
-                self.current_date = time; 
+                self.current_date = time;
                 true
-            },
+            }
             Msg::LoadCurrencyData => {
                 refresh_currency(ctx.link().callback(Msg::CurrencyDataReceived));
                 self.loading = true;
                 self.error = None;
                 self.currency = None;
                 true
-            },
+            }
             Msg::CurrencyDataReceived(result) => {
                 match result {
                     Ok(value) => {
                         self.error = None;
                         self.currency = Some(value);
-                    },
+                    }
                     Err(e) => {
                         self.error = Some(e);
                     }
@@ -76,7 +75,6 @@ impl Component for CurrencyComponent {
         }
     }
 
-    
     fn view(&self, _ctx: &Context<Self>) -> Html {
         let current_day: String = self.current_date.format("%A").to_string();
         let current_date: String = self.current_date.format("%d/%m/%Y").to_string();
@@ -93,7 +91,7 @@ impl Component for CurrencyComponent {
         if let Some(error) = &self.error {
             html! {
                 <div class="panel">
-                   { title_node } 
+                   { title_node }
                     <div class="panel-div">
                         <div>
                             <p style="color: red">{{ error }}</p>
@@ -101,8 +99,7 @@ impl Component for CurrencyComponent {
                     </div>
                 </div>
             }
-        }
-        else if self.loading {
+        } else if self.loading {
             html! {
                 <div class="panel">
                     { title_node }
@@ -116,11 +113,19 @@ impl Component for CurrencyComponent {
                 </div>
             }
         } else if let Some(conversion) = self.currency.as_ref() {
-            let from_currency = format!("{:.02} {}", conversion.from_currency_amount, conversion.from_currency);
-            let to_currency = format!("{:.02} {}", conversion.to_currency_amount, conversion.to_currency);
-            
+            let from_currency = format!(
+                "{:.02} {}",
+                conversion.from_currency_amount, conversion.from_currency
+            );
+            let to_currency = format!(
+                "{:.02} {}",
+                conversion.to_currency_amount, conversion.to_currency
+            );
+
             let refresh_date = {
-                let date_fetched = DateTime::from_timestamp(conversion.timestamp, 0).unwrap().with_timezone(&Local);
+                let date_fetched = DateTime::from_timestamp(conversion.timestamp, 0)
+                    .unwrap()
+                    .with_timezone(&Local);
                 let date = format!("{}", date_fetched.format("%d/%m/%Y"));
                 let time = format!("{}", date_fetched.format("%H:%M"));
                 format!("last update {date} {time}")
@@ -130,7 +135,7 @@ impl Component for CurrencyComponent {
                 <div class="panel">
                     { title_node }
                     <div class="panel-div">
-                        <div> 
+                        <div>
                             <div>
                                 <p class="currency-text">
                                     { from_currency }
@@ -146,8 +151,7 @@ impl Component for CurrencyComponent {
                     </small>
                 </div>
             }
-        }
-        else {
+        } else {
             html! {
                 <div class="panel">
                     { title_node }

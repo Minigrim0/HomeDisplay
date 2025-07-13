@@ -2,13 +2,11 @@
 /// These models represent the data that is sent to the frontend
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Coordinates {
     pub latitude: f32,
     pub longitude: f32,
 }
-
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Site {
@@ -17,13 +15,11 @@ pub struct Site {
     pub coord: Coordinates,
 }
 
-
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Line {
     pub id: i32,
     pub transport_mode: String,
 }
-
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Departure {

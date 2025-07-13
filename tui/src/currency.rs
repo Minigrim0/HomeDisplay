@@ -6,9 +6,7 @@ use ratatui::{
     layout::Rect,
     style::Stylize,
     text::{Line, Text},
-    widgets::{
-        Block, Paragraph, Widget,
-    },
+    widgets::{Block, Paragraph, Widget},
 };
 
 use homedisplay::models::currency::Conversion;
@@ -19,16 +17,18 @@ use crate::utilities::fit_into;
 #[derive(Debug)]
 /// Currency conversion display component
 pub struct CurrencyComponent {
-    pub last_refresh: SystemTime,                 // Last time conversion data was refreshed
-    pub conversion: Result<Conversion, TuiError>,  // Current conversion data or error
-    pub cooldown: Duration,                        // Time between refresh attempts
+    pub last_refresh: SystemTime, // Last time conversion data was refreshed
+    pub conversion: Result<Conversion, TuiError>, // Current conversion data or error
+    pub cooldown: Duration,       // Time between refresh attempts
 }
 
 impl Default for CurrencyComponent {
     fn default() -> CurrencyComponent {
         CurrencyComponent {
             last_refresh: SystemTime::now(),
-            conversion: Err(TuiError::CurrencyFetch("No conversion was fetched yet".to_string())),
+            conversion: Err(TuiError::CurrencyFetch(
+                "No conversion was fetched yet".to_string(),
+            )),
             cooldown: Duration::from_secs(60 * 60), // Once per hour
         }
     }
@@ -46,8 +46,8 @@ impl CurrencyComponent {
 
 impl Widget for &CurrencyComponent {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let last_refreshed = Line::from(
-            match SystemTime::now().duration_since(self.last_refresh) {
+        let last_refreshed =
+            Line::from(match SystemTime::now().duration_since(self.last_refresh) {
                 Ok(duration) => {
                     let minutes = duration.as_secs() / 60;
                     format!(
@@ -57,11 +57,9 @@ impl Widget for &CurrencyComponent {
                     )
                 }
                 Err(e) => format!("Err: {}", e.to_string()),
-            },
-        );
+            });
 
-        let currency_block = Block::new()
-            .title_bottom(last_refreshed.centered());
+        let currency_block = Block::new().title_bottom(last_refreshed.centered());
 
         let currency_text: Text = match &self.conversion {
             Ok(conversion) => {
@@ -78,13 +76,16 @@ impl Widget for &CurrencyComponent {
                 for _ in 1..(area.height - 2) / 2 {
                     lines.push(Line::from(""))
                 }
-                lines.push(Line::from(vec![
-                    format!("{:.2} ", conversion.from_currency_amount).bold(),
-                    conversion.from_currency.as_str().green(),
-                    " = ".into(),
-                    format!("{:.2} ", conversion.to_currency_amount).bold(),
-                    conversion.to_currency.as_str().green(),
-                ]).centered());
+                lines.push(
+                    Line::from(vec![
+                        format!("{:.2} ", conversion.from_currency_amount).bold(),
+                        conversion.from_currency.as_str().green(),
+                        " = ".into(),
+                        format!("{:.2} ", conversion.to_currency_amount).bold(),
+                        conversion.to_currency.as_str().green(),
+                    ])
+                    .centered(),
+                );
                 lines.push(Line::from(refresh_date.gray()).centered());
 
                 Text::from(lines)
@@ -97,7 +98,7 @@ impl Widget for &CurrencyComponent {
                 } else {
                     user_message.to_string()
                 };
-                
+
                 let error_lines = fit_into(detailed_message, (area.width - 2) as usize);
                 let mut lines: Vec<Line> = Vec::new();
 

@@ -1,22 +1,23 @@
-use std::time::Duration;
+use crate::glue::get_weather;
 use chrono::{DateTime, Local};
 use futures::stream::{Stream, StreamExt};
 use homedisplay::models::weather::WeatherInfo;
+use std::time::Duration;
 use wasm_bindgen_futures::spawn_local;
-use yew::Callback;
 use yew::platform::time::{interval, sleep};
-use crate::glue::get_weather;
+use yew::Callback;
 
 const ONE_SEC: Duration = Duration::from_secs(1);
 const WEATHER_REFRESH_INTERVAL: Duration = Duration::from_secs(60 * 30);
 
 pub fn refresh_weather(callback: Callback<Result<WeatherInfo, String>>) {
-    spawn_local( async move {
+    spawn_local(async move {
         match get_weather().await {
             Ok(response) => {
-                let weather: Result<WeatherInfo, String> = serde_wasm_bindgen::from_value(response).map_err(|e| e.to_string());
+                let weather: Result<WeatherInfo, String> =
+                    serde_wasm_bindgen::from_value(response).map_err(|e| e.to_string());
                 callback.emit(weather);
-            },
+            }
             Err(e) => {
                 callback.emit(serde_wasm_bindgen::from_value(e).map_err(|e| e.to_string()));
             }

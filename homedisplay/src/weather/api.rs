@@ -1,10 +1,10 @@
+use async_trait::async_trait;
 /// Implements the logic for fetching weather data from the OpenWeatherMap API
 use reqwest::Url;
-use async_trait::async_trait;
 
-use crate::traits::Api;
 use crate::models::weather::WeatherInfo;
 use crate::settings::Weather as WeatherSettings;
+use crate::traits::Api;
 
 #[async_trait]
 impl Api<WeatherSettings, WeatherInfo> for WeatherInfo {
@@ -16,17 +16,21 @@ impl Api<WeatherSettings, WeatherInfo> for WeatherInfo {
             ).as_str()
         ).map_err(|err| format!("Could not parse URL: {}", err))?;
 
-        let result = reqwest::get(url).await
+        let result = reqwest::get(url)
+            .await
             .map_err(|err| format!("Unable to fetch weather information {}", err.to_string()))?;
 
         match result.status() {
-            reqwest::StatusCode::OK => {
-                match result.json::<WeatherInfo>().await {
-                    Ok(data) => Ok(data),
-                    Err(err) => Err(format!("Error while parsing the weather data: {}", err.to_string()))
-                }
+            reqwest::StatusCode::OK => match result.json::<WeatherInfo>().await {
+                Ok(data) => Ok(data),
+                Err(err) => Err(format!(
+                    "Error while parsing the weather data: {}",
+                    err.to_string()
+                )),
             },
-            reqwest::StatusCode::UNAUTHORIZED => Err(format!("Unauthorized, maybe too much requests have been done for the day ?")),
+            reqwest::StatusCode::UNAUTHORIZED => Err(format!(
+                "Unauthorized, maybe too much requests have been done for the day ?"
+            )),
             _ => Err("Uh oh! Something unexpected happened.".to_string()),
         }
     }

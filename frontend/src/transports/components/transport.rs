@@ -1,13 +1,13 @@
-use homedisplay::models::transports::{Site, Departure};
+use chrono::prelude::Local;
+use futures::stream::StreamExt;
+use gloo_console::log;
+use homedisplay::models::transports::{Departure, Site};
 use std::collections::HashMap;
 use yew::{html, Component, Context, Html, Properties};
-use futures::stream::StreamExt;
-use chrono::prelude::Local;
-use gloo_console::log;
 
 use crate::transports::components::timing::Timing;
 
-use super::super::services::{fetch_sites, fetch_departures, stream_time};
+use super::super::services::{fetch_departures, fetch_sites, stream_time};
 
 pub struct TransportsComponent {
     sites: Vec<Site>,
@@ -43,7 +43,8 @@ impl Component for TransportsComponent {
 
         // Clock update, used to update the time since last update
         let time_stream = stream_time();
-        ctx.link().send_stream(time_stream.map(|_| Msg::ClockUpdate));
+        ctx.link()
+            .send_stream(time_stream.map(|_| Msg::ClockUpdate));
 
         TransportsComponent {
             sites: Vec::new(),
@@ -63,7 +64,8 @@ impl Component for TransportsComponent {
         }
 
         match msg {
-            Msg::ClockUpdate => {  // Update timestamps
+            Msg::ClockUpdate => {
+                // Update timestamps
                 let now = Local::now().timestamp();
                 self.time_since_last_update = now - self.last_update;
                 if self.time_since_last_update > 60 {
@@ -71,13 +73,15 @@ impl Component for TransportsComponent {
                 }
                 true
             }
-            Msg::LoadSitessData => {  // Call the API to load the sites
+            Msg::LoadSitessData => {
+                // Call the API to load the sites
                 self.loading = true;
                 self.error = None;
                 fetch_sites(ctx.link().callback(Msg::SitesDataReceived));
                 true
             }
-            Msg::SitesDataReceived(result) => {  // Handle the sites data
+            Msg::SitesDataReceived(result) => {
+                // Handle the sites data
                 match result {
                     Ok(value) => {
                         self.error = None;
@@ -91,13 +95,15 @@ impl Component for TransportsComponent {
                 // Load the departures for each site
                 true
             }
-            Msg::LoadDepartures(site_id) => {  // Call the API to load the departures
+            Msg::LoadDepartures(site_id) => {
+                // Call the API to load the departures
                 self.refreshing = true;
                 self.error = None;
                 fetch_departures(site_id, ctx.link().callback(Msg::DeparturesDataReceived));
                 true
             }
-            Msg::DeparturesDataReceived(result) => {  // Handle the departures data
+            Msg::DeparturesDataReceived(result) => {
+                // Handle the departures data
                 match result {
                     Ok((site_id, departures)) => {
                         log!("Loaded departures for site {}", &site_id);
@@ -115,9 +121,11 @@ impl Component for TransportsComponent {
                 self.refreshing = false;
                 true
             }
-            Msg::LoadAllDepartures => {  // Load all departures
+            Msg::LoadAllDepartures => {
+                // Load all departures
                 for site in &self.sites {
-                    ctx.link().send_message(Msg::LoadDepartures(site.id.clone()));
+                    ctx.link()
+                        .send_message(Msg::LoadDepartures(site.id.clone()));
                 }
                 self.last_update = Local::now().timestamp();
                 true
@@ -144,7 +152,10 @@ impl Component for TransportsComponent {
             }
         } else {
             let last_update = if self.refreshing {
-                format!("{} seconds ago. (refreshing...)", self.time_since_last_update)
+                format!(
+                    "{} seconds ago. (refreshing...)",
+                    self.time_since_last_update
+                )
             } else {
                 format!("{} seconds ago.", self.time_since_last_update)
             };
