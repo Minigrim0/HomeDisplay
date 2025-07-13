@@ -1,4 +1,4 @@
-use common::models::transports::{Departure, Site};
+use homedisplay::models::transports::{Departure, Site};
 use std::time::Duration;
 use futures::stream::{Stream, StreamExt};
 use wasm_bindgen_futures::spawn_local;

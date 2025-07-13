@@ -1,4 +1,4 @@
-use common::models::transports::Departure;
+use homedisplay::models::transports::Departure;
 use yew::{html, Html, Component, Context, Properties};
 
 pub struct Timing;

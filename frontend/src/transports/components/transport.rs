@@ -1,4 +1,4 @@
-use common::models::transports::{Site, Departure};
+use homedisplay::models::transports::{Site, Departure};
 use std::collections::HashMap;
 use yew::{html, Component, Context, Html, Properties};
 use futures::stream::StreamExt;

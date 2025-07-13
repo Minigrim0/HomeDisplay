@@ -6,7 +6,7 @@ use yew::Callback;
 use yew::platform::time::{interval, sleep};
 
 use crate::glue::get_currency;
-use common::models::currency::Conversion;
+use homedisplay::models::currency::Conversion;
 
 const ONE_SEC: Duration = Duration::from_secs(1);
 const CONVERSION_REFRESH_INTERVAL: Duration = Duration::from_secs(3600);

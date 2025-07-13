@@ -3,7 +3,7 @@ use futures::StreamExt;
 use yew::{html, Html, Component, Context, Properties};
 
 use super::services::{start_currency_job, stream_time, refresh_currency};
-use common::models::currency::Conversion;
+use homedisplay::models::currency::Conversion;
 
 
 pub struct CurrencyComponent {

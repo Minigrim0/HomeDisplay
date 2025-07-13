@@ -1,7 +1,7 @@
 use std::time::Duration;
 use chrono::{DateTime, Local};
 use futures::stream::{Stream, StreamExt};
-use common::models::weather::WeatherInfo;
+use homedisplay::models::weather::WeatherInfo;
 use wasm_bindgen_futures::spawn_local;
 use yew::Callback;
 use yew::platform::time::{interval, sleep};

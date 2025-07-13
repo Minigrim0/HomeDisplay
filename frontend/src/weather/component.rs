@@ -2,7 +2,7 @@ use yew::{html, Component, Context, Html, Properties};
 use chrono::prelude::{Local, Timelike};
 use futures::StreamExt;
 
-use common::models::weather::WeatherInfo;
+use homedisplay::models::weather::WeatherInfo;
 
 use super::services::{start_weather_job, refresh_weather, stream_time};
 
