@@ -82,6 +82,9 @@ impl AsyncDataManager {
         settings: Settings,
         config: RefreshConfig,
     ) -> TuiResult<mpsc::Receiver<DataUpdate>> {
+        info!("Starting async data manager with intervals: weather={}s, currency={}s, transport={}s", 
+              config.weather_interval.as_secs(), config.currency_interval.as_secs(), config.transport_interval.as_secs());
+        
         let (tx, rx) = mpsc::channel();
         let (shutdown_tx, shutdown_rx) = oneshot::channel();
         
@@ -94,13 +97,15 @@ impl AsyncDataManager {
         let redis_settings = settings.redis.clone();
 
         // Spawn weather task
+        info!("Spawning weather background task");
         let weather_tx = tx.clone();
         let weather_redis = redis_settings.clone();
         self.runtime.spawn(async move {
             Self::weather_task(weather_settings, weather_redis, weather_tx, config.weather_interval).await;
         });
 
-        // Spawn currency task  
+        // Spawn currency task
+        info!("Spawning currency background task");
         let currency_tx = tx.clone();
         let currency_redis = redis_settings.clone();
         self.runtime.spawn(async move {
@@ -108,6 +113,7 @@ impl AsyncDataManager {
         });
 
         // Spawn transport task
+        info!("Spawning transport background task");
         let transport_tx = tx.clone();
         let transport_redis = redis_settings;
         self.runtime.spawn(async move {
@@ -115,9 +121,10 @@ impl AsyncDataManager {
         });
 
         // Spawn shutdown monitoring task
+        info!("Spawning shutdown monitoring task");
         self.runtime.spawn(async move {
             let _ = shutdown_rx.await;
-            info!("Async data manager shutting down");
+            info!("Shutdown signal received, async data manager shutting down");
         });
 
         info!("Background data tasks started");
@@ -131,26 +138,29 @@ impl AsyncDataManager {
         tx: mpsc::Sender<DataUpdate>,
         interval: Duration,
     ) {
+        info!("Weather task started with interval: {}s", interval.as_secs());
         let mut interval_timer = tokio::time::interval(interval);
         
         loop {
             interval_timer.tick().await;
             
-            info!("Fetching weather data");
+            info!("Weather task: Starting data fetch");
             let result = match homedisplay::weather::database::fetch_current_weather(settings.clone(), &redis).await {
                 Ok(weather) => {
-                    info!("Weather data fetched successfully");
+                    info!("Weather task: Data fetched successfully - temp: {:.1}°C", weather.current.temperature_2m);
                     Ok(weather)
                 },
                 Err(e) => {
-                    error!("Failed to fetch weather: {}", e);
+                    error!("Weather task: Failed to fetch data: {}", e);
                     Err(TuiError::WeatherFetch(e))
                 }
             };
 
             if let Err(e) = tx.send(DataUpdate::Weather(result)) {
-                error!("Failed to send weather update: {}", e);
+                error!("Weather task: Failed to send update to UI thread: {}", e);
                 break;
+            } else {
+                info!("Weather task: Update sent to UI thread successfully");
             }
         }
     }
@@ -162,26 +172,31 @@ impl AsyncDataManager {
         tx: mpsc::Sender<DataUpdate>,
         interval: Duration,
     ) {
+        info!("Currency task started with interval: {}s", interval.as_secs());
         let mut interval_timer = tokio::time::interval(interval);
         
         loop {
             interval_timer.tick().await;
             
-            info!("Fetching currency data");
+            info!("Currency task: Starting data fetch");
             let result = match homedisplay::currency::database::fetch_current_conversion(settings.clone(), &redis).await {
                 Ok(currency) => {
-                    info!("Currency data fetched successfully");
+                    info!("Currency task: Data fetched successfully - {} {} = {} {}", 
+                          currency.from_currency_amount, currency.from_currency,
+                          currency.to_currency_amount, currency.to_currency);
                     Ok(currency)
                 },
                 Err(e) => {
-                    error!("Failed to fetch currency: {}", e);
+                    error!("Currency task: Failed to fetch data: {}", e);
                     Err(TuiError::CurrencyFetch(e))
                 }
             };
 
             if let Err(e) = tx.send(DataUpdate::Currency(result)) {
-                error!("Failed to send currency update: {}", e);
+                error!("Currency task: Failed to send update to UI thread: {}", e);
                 break;
+            } else {
+                info!("Currency task: Update sent to UI thread successfully");
             }
         }
     }
@@ -193,12 +208,13 @@ impl AsyncDataManager {
         tx: mpsc::Sender<DataUpdate>,
         interval: Duration,
     ) {
+        info!("Transport task started with interval: {}s, monitoring {} stops", interval.as_secs(), stops.len());
         let mut interval_timer = tokio::time::interval(interval);
         
         loop {
             interval_timer.tick().await;
             
-            info!("Fetching transport data");
+            info!("Transport task: Starting data fetch for {} stops", stops.len());
             let mut transport_update = TransportUpdate {
                 sites: Vec::new(),
                 departures: std::collections::HashMap::new(),
@@ -208,19 +224,24 @@ impl AsyncDataManager {
 
             // Fetch sites
             let sites = match homedisplay::transports::database::get_sites(&stops, &redis).await {
-                Ok(sites) => sites,
+                Ok(sites) => {
+                    info!("Transport task: Fetched {} sites successfully", sites.len());
+                    sites
+                },
                 Err(e) => {
-                    error!("Failed to fetch transport sites: {}", e);
+                    error!("Transport task: Failed to fetch sites: {}", e);
                     transport_update.error = Some(TuiError::TransportFetch(format!("Failed to fetch sites: {}", e)));
                     if let Err(send_err) = tx.send(DataUpdate::Transport(transport_update)) {
-                        error!("Failed to send transport update: {}", send_err);
+                        error!("Transport task: Failed to send error update to UI thread: {}", send_err);
                     }
                     continue;
                 }
             };
 
             // Fetch departures for each site
+            info!("Transport task: Fetching departures for {} sites", sites.len());
             for site in &sites {
+                info!("Transport task: Fetching departures for site {} ({})", site.id, site.name);
                 let departures = match homedisplay::transports::database::get_departures(site.id.clone(), &redis).await {
                     Ok(departures) => {
                         // Apply line filtering if configured
@@ -236,10 +257,11 @@ impl AsyncDataManager {
                             departures
                         };
                         
+                        info!("Transport task: Site {} - {} departures after filtering", site.id, filtered_departures.len());
                         filtered_departures
                     },
                     Err(e) => {
-                        error!("Failed to fetch departures for site {}: {}", site.id, e);
+                        error!("Transport task: Failed to fetch departures for site {} ({}): {}", site.id, site.name, e);
                         transport_update.site_errors.insert(
                             site.id.clone(),
                             TuiError::TransportFetch(format!("Failed to fetch departures: {}", e))
@@ -252,15 +274,19 @@ impl AsyncDataManager {
             }
 
             // Filter out sites with no departures
+            let original_count = sites.len();
             transport_update.sites = sites.into_iter()
                 .filter(|site| transport_update.departures.get(&site.id).map_or(false, |deps| !deps.is_empty()))
                 .collect();
 
-            info!("Transport data fetched for {} sites", transport_update.sites.len());
+            info!("Transport task: Data processed - {} sites with departures (filtered from {})", 
+                  transport_update.sites.len(), original_count);
 
             if let Err(e) = tx.send(DataUpdate::Transport(transport_update)) {
-                error!("Failed to send transport update: {}", e);
+                error!("Transport task: Failed to send update to UI thread: {}", e);
                 break;
+            } else {
+                info!("Transport task: Update sent to UI thread successfully");
             }
         }
     }

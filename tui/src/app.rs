@@ -83,6 +83,8 @@ impl App {
             log::error!("Failed to start async data manager: {}", e);
             return Err(io::Error::new(ErrorKind::Other, e.to_string()));
         }
+        
+        log::info!("Entering main application loop");
         while !self.exit {
             if let Ok(size) = terminal.size() {
                 if size.height < 5 || size.width < 30 {
@@ -96,6 +98,7 @@ impl App {
             self.handle_events()?;
             self.update_state()?;
         }
+        log::info!("TUI application main loop exited");
         Ok(())
     }
 
