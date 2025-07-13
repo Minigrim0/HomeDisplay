@@ -9,6 +9,7 @@ use simplelog::{CombinedLogger, Config, LevelFilter, WriteLogger};
 use homedisplay::settings::Settings;
 
 mod app;
+mod async_manager;
 mod currency;
 mod datetime;
 mod error;
