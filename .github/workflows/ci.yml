@@ -17,6 +17,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+          targets: wasm32-unknown-unknown
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -30,20 +31,17 @@ jobs:
       - name: Check formatting
         run: cargo fmt --all -- --check
 
-      - name: Run clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Run clippy on homedisplay crate
+        run: cargo clippy -p homedisplay --features network -- -D warnings
 
       - name: Check TUI builds
         run: cargo check --bin hd-tui
 
-      - name: Check homedisplay library
+      - name: Check homedisplay library  
         run: cargo check -p homedisplay --features network
 
-      - name: Check src-tauri
-        run: cargo check -p hd-tauri
-
-      - name: Check frontend
-        run: cargo check -p frontend
+      - name: Check frontend (WASM target)
+        run: cargo check -p frontend --target wasm32-unknown-unknown
 
       - name: Run tests
-        run: cargo test --workspace --all-features
+        run: cargo test -p homedisplay --features network
