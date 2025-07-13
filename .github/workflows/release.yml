@@ -19,7 +19,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -56,11 +56,7 @@ jobs:
           echo "Tauri version: $(grep '"version"' src-tauri/tauri.conf.json | cut -d'"' -f4)"
 
       - name: Setup Rust for version check
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          profile: minimal
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Verify cargo metadata
         run: |
@@ -101,12 +97,12 @@ jobs:
           git push origin "v${{ inputs.version }}"
 
       - name: Create GitHub Release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${{ inputs.version }}
-          release_name: HomeDisplay v${{ inputs.version }}
+          name: HomeDisplay v${{ inputs.version }}
           body: |
             ${{ steps.changelog.outputs.changelog }}
             
